@@ -1,0 +1,136 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/onest';
+
+@theme {
+  --breakpoint-sm: 360px;
+  --breakpoint-lg: 991px;
+  --breakpoint-xl: 1920px;
+  --breakpoint-xxl: 2560px;
+
+  --color-black: #000000;
+  --color-black-90: #1a1a1a;
+  --color-black-95: #1b1b1b;
+  --color-white: #ffffff;
+  --color-primary: #141414;
+  --color-purple: #a357ff;
+  --color-gray-10: #f1f1f1;
+  --color-gray-20: #e7e6ea;
+  --color-gray-40: #b3acbd;
+  --font-display: 'Onest Variable', 'sans-serif';
+  --default-transition-duration: 0.3s;
+  --shadow-top: 0px 4px 8px 0px #1d1d1b29;
+}
+
+@layer base {
+  :root {
+    --spacing: calc(100vw / 360);
+    --spacing: calc(100cqw / 360);
+    @media (min-width: 991px) {
+      --spacing: calc(100vw / 1920);
+      --spacing: calc(100cqw / 1920);
+    }
+  }
+  * {
+    outline: none;
+  }
+
+  [id] {
+    @apply scroll-mt-40 md:scroll-mt-74 lg:scroll-mt-89;
+  }
+}
+
+@utility text-* {
+  font-size: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-* {
+  border-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-t-* {
+  border-top-left-radius: calc(var(--spacing) * --value(integer));
+  border-top-right-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-b-* {
+  border-bottom-left-radius: calc(var(--spacing) * --value(integer));
+  border-bottom-right-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-r-* {
+  border-top-right-radius: calc(var(--spacing) * --value(integer));
+  border-bottom-right-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-l-* {
+  border-top-left-radius: calc(var(--spacing) * --value(integer));
+  border-bottom-left-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-tr-* {
+  border-top-right-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-tl-* {
+  border-top-left-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-br-* {
+  border-bottom-right-radius: calc(var(--spacing) * --value(integer));
+}
+@utility rounded-bl-* {
+  border-bottom-left-radius: calc(var(--spacing) * --value(integer));
+}
+@utility border-* {
+  border-width: calc(var(--spacing) * --value(integer));
+}
+@utility gap-* {
+  gap: calc(var(--spacing) * --value(integer));
+}
+@utility scrollbar-visible-* {
+  &::-webkit-scrollbar {
+    width: calc(var(--spacing) * --value(integer));
+  }
+}
+@utility border-t-* {
+  border-top-color: --value(--color-*);
+}
+@utility border-l-* {
+  border-left-color: --value(--color-*);
+}
+@utility border-spacing-* {
+  border-spacing: --value(--color-*);
+}
+@utility no-scrollbar {
+  /* Для Chrome, Safari и Edge */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* Для Firefox */
+  scrollbar-width: none;
+  /* Для IE и старого Edge */
+  -ms-overflow-style: none;
+}
+
+@layer utilities {
+  .custom-scrollbar {
+    /* Firefox */
+    /* @media (min-width: 1025px) {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    } */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-4;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    /* @apply rounded-8 bg-gray-10; */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply rounded-8 bg-primary;
+  }
+
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    overflow-y: scroll;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+}
