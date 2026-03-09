@@ -51,7 +51,7 @@ export default defineNuxtConfig({
     layoutTransition: false,
   },
   css: ['~/assets/styles.css'],
-  modules: ['@pinia/nuxt', '@nuxt/image'],
+  modules: ['@pinia/nuxt', '@nuxt/image', '@peterbud/nuxt-query'],
   // image: {
   //   format: ['avif', 'webp'], // AVIF приоритетнее в 2026 году
   //   screens: {
@@ -61,6 +61,24 @@ export default defineNuxtConfig({
   //     xl: 1920,
   //   },
   // },
+  nuxtQuery: {
+    autoImports: ['useQuery', 'useMutation'],
+    devtools: true,
+    queryClientOptions: {
+      defaultOptions: {
+        queries: {
+          networkMode: 'always',
+          retry: 1,
+          retryDelay: 1000,
+          staleTime: 60000 * 60 * 12,
+          refetchOnWindowFocus: false,
+        },
+        mutations: {
+          networkMode: 'always',
+        },
+      },
+    },
+  },
   typescript: {
     strict: true,
   },
