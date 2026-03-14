@@ -2,7 +2,7 @@ export default function () {
   const images = ref({});
 
   const loadAsset = (id, url) => {
-    if (process.server || !url) return;
+    if (import.meta.server || !url) return;
     if (images.value[id]) return;
 
     const img = new window.Image();

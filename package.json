@@ -16,6 +16,7 @@
   "dependencies": {
     "@fontsource-variable/onest": "5.2.11",
     "@nuxt/image": "2.0.0",
+    "@nuxtjs/supabase": "2.0.4",
     "@peterbud/nuxt-query": "1.6.0",
     "@pinia/nuxt": "0.11.3",
     "@tailwindcss/vite": "4.2.1",

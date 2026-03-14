@@ -1,6 +1,6 @@
 import useApi from '~/composables/api/_client';
 
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/nast791/Unmatched-pack@master/';
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/nast791/Unplugged-pack@master/';
 
 export const usePlugins = () => {
   const query = useQuery({

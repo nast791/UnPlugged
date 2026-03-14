@@ -3,8 +3,10 @@ import useUtils from '~/composables/useUtils';
 export default function () {
   const { shuffle } = useUtils();
 
-  const createFighter = (data, startNodeId) => {
+  const createFighter = (data, startNodeId, cdnBase) => {
     const { config, cards, folder } = data;
+    const heroFolderUrl = `${cdnBase}heroes/${config.id}/`;
+    const avatarUrl = `${heroFolderUrl}${config.assets.avatar}`;
 
     const fullDeck = [];
     cards.forEach(card => {
@@ -65,6 +67,7 @@ export default function () {
       stats: config.stats,
       ability: config.ability,
       assets: config.assets,
+      avatarUrl,
       folder: folder,
       fighters,
       items,
@@ -74,19 +77,32 @@ export default function () {
     };
   };
 
-  const createMap = (mapData) => {
-    const nodes = ref(mapData.nodes || []);
+  const createMap = (mapData, cdnBase) => {
+    const size = mapData.settings?.nodeSize || 40;
+    const radius = size / 2;
+    const backgroundUrl = `${cdnBase}maps/${mapData.id}/${mapData.assets.background}`;
+
+    const nodes = computed(() => {
+      return (mapData.nodes || []).map(node => ({
+        ...node,
+        x: node.x + radius,
+        y: node.y + radius
+      }));
+    });
 
     const connections = computed(() => {
       const res = [];
       nodes.value.forEach(node => {
         node.neighbors?.forEach(neighborId => {
-          if (Number(neighborId) > Number(node.id)) {
-            const target = nodes.value.find(n => Number(n.id) === Number(neighborId));
+          const nId = Number(neighborId);
+          const cId = Number(node.id);
+
+          if (nId > cId) {
+            const target = nodes.value.find(n => Number(n.id) === nId);
             if (target) {
               res.push({
                 points: [node.x, node.y, target.x, target.y],
-                id: `l-${node.id}-${neighborId}`
+                id: `l-${cId}-${nId}`
               });
             }
           }
@@ -101,7 +117,8 @@ export default function () {
       settings: mapData.settings,
       assets: mapData.assets,
       nodes, 
-      connections 
+      connections,
+      backgroundUrl
     };
   }
 

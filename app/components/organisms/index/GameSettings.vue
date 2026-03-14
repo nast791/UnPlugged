@@ -113,7 +113,7 @@
 import { usePlugins, startBattle } from '~/composables/api/plugins';
 import { useGameStore } from '~/store/game.js';
 
-const { suspense, heroes, maps, isLoading } = usePlugins();
+const { suspense, heroes, maps, isLoading, CDN_BASE } = usePlugins();
 const { mutateAsync } = startBattle();
 
 await Promise.all([suspense()]);
@@ -139,13 +139,13 @@ const handleStartBattle = async () => {
     {
       playerId: selectedPlayerHero.value,
       aiId: selectedAiHero.value,
-      mapId: 'sarpedon',
+      mapId: 'alchemy',
       heroes,
       maps,
     },
     {
       onSuccess: data => {
-        initGame(data);
+        initGame(data, CDN_BASE);
         emits('close');
       },
       onError: err => {
