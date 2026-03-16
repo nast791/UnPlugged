@@ -113,7 +113,7 @@
 import { usePlugins, startBattle } from '~/composables/api/plugins';
 import { useGameStore } from '~/store/game.js';
 
-const { suspense, heroes, maps, isLoading, CDN_BASE } = usePlugins();
+const { suspense, heroes, maps, isLoading } = usePlugins();
 const { mutateAsync } = startBattle();
 
 await Promise.all([suspense()]);
@@ -145,7 +145,7 @@ const handleStartBattle = async () => {
     },
     {
       onSuccess: data => {
-        initGame(data, CDN_BASE);
+        initGame(data);
         emits('close');
       },
       onError: err => {

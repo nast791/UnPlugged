@@ -27,6 +27,11 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: true,
   },
+  runtimeConfig: {
+    public: {
+      pack: '' 
+    }
+  },
   app: {
     head: {
       titleTemplate: 'UnPlugged: %s',

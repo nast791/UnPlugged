@@ -1,20 +1,23 @@
 export default function () {
-  const images = ref({});
+  const loadAsset = (url) => {
+    if (import.meta.server || !url) return Promise.resolve(null);
 
-  const loadAsset = (id, url) => {
-    if (import.meta.server || !url) return;
-    if (images.value[id]) return;
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = url;
 
-    const img = new window.Image();
-    img.crossOrigin = 'Anonymous';
-    img.src = url;
-    img.onload = () => {
-      images.value[id] = img;
-    };
-    img.onerror = () => {
-      console.error(`Ошибка загрузки ассета: ${id} по адресу ${url}`);
-    };
+      img.onload = () => {
+        resolve(img);
+      };
+
+      img.onerror = () => {
+        const msg = `Ошибка загрузки ассета: по адресу ${url}`;
+        console.error(msg);
+        reject(new Error(msg));
+      };
+    });
   };
 
-  return { images, loadAsset };
+  return { loadAsset };
 }

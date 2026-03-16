@@ -9,22 +9,22 @@ export const useGameStore = defineStore('game', {
     isGameStarted: false,
   }),
   actions: {
-    initGame({ player, ai, map }, CDN_BASE) {
+    initGame({ player, ai, map }) {
       const { createFighter, createMap } = useGameFactory();
-      this.map = createMap(map, CDN_BASE);
+      this.map = createMap(map);
     
-      if (!map.nodes || map.nodes.length === 0) {
+      if (!this.map.nodes || this.map.nodes.length === 0) {
         this.player = null;
         this.ai = null;
         this.isGameStarted = true;
         return;
       }
     
-      const p1Node = map.nodes.find(n => n.position === 1);
-      const p2Node = map.nodes.find(n => n.position === 2);
+      const p1Node = this.map.nodes.find(i => i.position === 1);
+      const p2Node = this.map.nodes.find(i => i.position === 2);
       
-      if (p1Node) this.player = createFighter(player, p1Node.id, CDN_BASE);
-      if (p2Node) this.ai = createFighter(ai, p2Node.id, CDN_BASE);
+      if (p1Node) this.player = createFighter(player, p1Node.id);
+      if (p2Node) this.ai = createFighter(ai, p2Node.id);
     
       this.isGameStarted = true;
     }

@@ -3,10 +3,8 @@ import useUtils from '~/composables/useUtils';
 export default function () {
   const { shuffle } = useUtils();
 
-  const createFighter = (data, startNodeId, cdnBase) => {
-    const { config, cards, folder } = data;
-    const heroFolderUrl = `${cdnBase}heroes/${config.id}/`;
-    const avatarUrl = `${heroFolderUrl}${config.assets.avatar}`;
+  const createFighter = (data, startNodeId) => {
+    const { config, cards, info } = data;
 
     const fullDeck = [];
     cards.forEach(card => {
@@ -16,29 +14,32 @@ export default function () {
       }
     });
 
-    const fighters = [
-      {
-        id: config.id,
+    const nuxtConfig = useRuntimeConfig();
+
+    const fighters = config.heroes.map(i => ({
+      ...i,
+      ...{
         type: 'hero',
-        name: config.name,
-        hp: config.stats.hp,
-        maxHp: config.stats.hp,
+        currentHp: i.hp,
         position: startNodeId,
-        image: config.assets.avatar,
+        imageSrc: `${nuxtConfig.public.pack}${info.folder}/${i.image}`
       },
-    ];
+    }));
 
     if (config.assistants?.length) {
-      config.assistants.forEach(as => {
-        for (let i = 0; i < (as.count || 1); i++) {
+      config.assistants.forEach(i => {
+        const groupId = i.id;
+        for (let item = 0; item < (i.count || 1); item++) {
           fighters.push({
-            id: as.id,
-            instanceId: `${as.id}_${i}`,
-            type: 'sidekick',
-            hp: as.hp,
-            currentHp: as.hp,
-            position: null,
-            image: as.image,
+            ...i,
+            ...{
+              id: `${i.id}_${item + 1}`,
+              groupId,
+              type: 'assistant',
+              currentHp: i.hp,
+              position: null,
+              imageSrc: `${nuxtConfig.public.pack}${info.folder}/${i.image}`
+            },
           });
         }
       });
@@ -63,12 +64,6 @@ export default function () {
 
     return {
       id: config.id,
-      name: config.name,
-      stats: config.stats,
-      ability: config.ability,
-      assets: config.assets,
-      avatarUrl,
-      folder: folder,
       fighters,
       items,
       hand: shuffledCards.splice(0, 5),
@@ -77,16 +72,17 @@ export default function () {
     };
   };
 
-  const createMap = (mapData, cdnBase) => {
-    const size = mapData.settings?.nodeSize || 40;
+  const createMap = data => {
+    const { config, info } = data;
+
+    const size = config.settings?.nodeSize || 40;
     const radius = size / 2;
-    const backgroundUrl = `${cdnBase}maps/${mapData.id}/${mapData.assets.background}`;
 
     const nodes = computed(() => {
-      return (mapData.nodes || []).map(node => ({
+      return (config.nodes || []).map(node => ({
         ...node,
         x: node.x + radius,
-        y: node.y + radius
+        y: node.y + radius,
       }));
     });
 
@@ -102,7 +98,7 @@ export default function () {
             if (target) {
               res.push({
                 points: [node.x, node.y, target.x, target.y],
-                id: `l-${cId}-${nId}`
+                id: `l-${cId}-${nId}`,
               });
             }
           }
@@ -112,15 +108,15 @@ export default function () {
     });
 
     return {
-      id: mapData.id,
-      name: mapData.name,
-      settings: mapData.settings,
-      assets: mapData.assets,
-      nodes, 
+      id: config.id,
+      name: config.name,
+      settings: config.settings,
+      assets: config.assets,
+      nodes,
       connections,
-      backgroundUrl
+      imageSrc: info.image
     };
-  }
+  };
 
   return { createFighter, createMap };
 }

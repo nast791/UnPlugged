@@ -23,9 +23,18 @@ export default function () {
     return newArray;
   };
 
+  const getNodePosition = (nodeId, nodes) => {
+    const node = nodes.find(i => i.id === nodeId || i.id === Number(nodeId));
+    if (node) {
+      return { x: node.x, y: node.y };
+    }
+    return { x: 0, y: 0 };
+  };
+
   return {
     toggleStopScrolling,
     cloneDeep,
-    shuffle
+    shuffle,
+    getNodePosition
   };
 }

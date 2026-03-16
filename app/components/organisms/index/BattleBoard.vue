@@ -2,9 +2,12 @@
   <ClientOnly>
     <div v-if="map" class="w-full h-full bg-slate-950">
       <v-stage ref="stageRef" :config="stageConfig" @wheel="handleWheel">
-        <v-layer v-if="images.mapBg">
+        <v-layer>
           <!-- 1. ФОН -->
-          <v-image :config="{ image: images.mapBg }" />
+          <MapBackground 
+            :imageUrl="map.imageSrc" 
+            @loaded="centerOnImage" 
+          />
 
           <!-- 2. ЛИНИИ (под нодами) -->
           <MapLines :lines="connections" />
@@ -21,21 +24,23 @@
 
           <!-- 4. ГЕРОИ -->
           <MapHero
-            v-if="player?.fighters?.position"
-            :position="player.fighters.position"
-            :image="images.heroPlayer"
+            :position="getNodePosition(item.position, nodes)"
+            :imageUrl="item.imageSrc"
             :nodeSize="nodeSize"
             :scale="currentScale"
             color="#22d3ee"
+            v-for="item in player?.fighters"
+            :key="item.id"
           />
 
           <MapHero
-            v-if="ai?.fighters?.position"
-            :position="ai.fighters.position"
-            :image="images.heroAI"
+            :position="getNodePosition(item.position, nodes)"
+            :imageUrl="item.imageSrc"
             :nodeSize="nodeSize"
             :scale="currentScale"
             color="#f87171"
+            v-for="item in ai?.fighters"
+            :key="item.id"
           />
         </v-layer>
       </v-stage>
@@ -47,19 +52,9 @@
 import MapLines from '~/components/molecules/index/MapLines.vue';
 import MapNode from '~/components/molecules/index/MapNode.vue';
 import MapHero from '~/components/molecules/index/MapHero.vue';
+import MapBackground from '~/components/molecules/index/MapBackground.vue';
 import { useGameStore } from '~/store/game.js';
 import { usePlugins } from '~/composables/api/plugins';
-import useKonvaLoader from '~/composables/useKonvaLoader';
-
-const { map, player, ai } = storeToRefs(useGameStore());
-const { suspense } = usePlugins();
-await Promise.all([suspense()]);
-
-const { images, loadAsset } = useKonvaLoader();
-
-const connections = computed(() => map.value?.connections || []);
-const nodes = computed(() => map.value?.nodes || []);
-const nodeSize = computed(() => map.value?.settings?.nodeSize);
 
 const stageRef = ref(null);
 const stageConfig = ref({
@@ -69,49 +64,40 @@ const stageConfig = ref({
 });
 const currentScale = ref(1);
 
+const { map, player, ai } = storeToRefs(useGameStore());
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
+const { getNodePosition } = useUtils();
+
+const connections = computed(() => map.value?.connections || []);
+const nodes = computed(() => map.value?.nodes || []);
+const nodeSize = computed(() => map.value?.settings?.nodeSize);
+
+const handleResize = () => {
+  if (import.meta.client) {
+    stageConfig.value.width = window.innerWidth;
+    stageConfig.value.height = window.innerHeight;
+  }
+};
+
+onMounted(async () => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    window.removeEventListener('resize', handleResize);
+  }
+});
+
+const { suspense } = usePlugins();
+await Promise.all([suspense()]);
 
 const handleNodeClick = (e, nodeId) => {
   console.log('Выбрана нода для хода/действия:', nodeId);
 };
 
-watch(
-  () => images.value.mapBg,
-  img => {
-    if (img) nextTick(() => centerOnImage(img));
-  },
-);
-
 const handleWheel = e => {
   zoomToPoint(e);
 };
-
-const initAssets = () => {
-  if (map.value?.backgroundUrl) loadAsset('mapBg', map.value.backgroundUrl);
-
-  const allFighters = [...(player.value?.fighters || []), ...(ai.value?.fighters || [])];
-
-  allFighters.forEach(f => {
-    if (f.avatarUrl) {
-      // Ключ для images: 'hero_ID' или 'sidekick_ID'
-      loadAsset(`${f.type}_${f.id}`, f.avatarUrl);
-    }
-  });
-};
-
-onMounted(() => {
-  const stage = stageRef.value?.getStage();
-  if (stage) {
-    currentScale.value = stage.scaleX() || 1;
-  }
-
-  initAssets();
-
-  stageConfig.value.width = window.innerWidth;
-  stageConfig.value.height = window.innerHeight;
-  window.addEventListener('resize', () => {
-    stageConfig.value.width = window.innerWidth;
-    stageConfig.value.height = window.innerHeight;
-  });
-});
 </script>

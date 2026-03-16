@@ -1,12 +1,12 @@
 import useApi from '~/composables/api/_client';
 
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/nast791/Unplugged-pack@master/';
-
 export const usePlugins = () => {
+  const config = useRuntimeConfig(); 
+
   const query = useQuery({
     queryKey: ['plugins-registry'],
     queryFn: () =>
-      useApi()(`${CDN_BASE}index.json`).then(data =>
+      useApi()(`${config.public.pack}index.json?v=1`).then(data =>
         typeof data === 'string' ? JSON.parse(data) : data,
       ),
   });
@@ -16,7 +16,7 @@ export const usePlugins = () => {
 
     return query.data.value.heroes.map(hero => ({
       ...hero,
-      avatar: `${CDN_BASE}${hero.folder}avatar.webp`,
+      avatar: `${config.public.pack}${hero.folder}${hero.image || 'avatar.webp'}`,
     }));
   });
 
@@ -25,55 +25,56 @@ export const usePlugins = () => {
 
     return query.data.value.maps.map(map => ({
       ...map,
-      image: `${CDN_BASE}${map.folder}${map.image || 'background.webp'}`,
+      image: `${config.public.pack}${map.folder}${map.image || 'background.webp'}`,
     }));
   });
 
   return {
     ...query,
     heroes,
-    maps,
-    CDN_BASE,
+    maps
   };
 };
 
 export const startBattle = () => {
+  const config = useRuntimeConfig(); 
+
   return useMutation({
     mutationKey: ['start-battle'],
     mutationFn: async ({ playerId, aiId, mapId, heroes = [], maps = [] }) => {
-      const pReg = heroes.value.find(h => h.id === playerId);
-      const aiReg = heroes.value.find(h => h.id === aiId);
-      const mReg = maps.value.find(m => m.id === mapId);
+      const player = heroes.value.find(i => i.id === playerId);
+      const ai = heroes.value.find(i => i.id === aiId);
+      const map = maps.value.find(i => i.id === mapId);
 
-      if (!pReg || !aiReg || !mReg) {
+      if (!player || !ai || !map) {
         throw new Error('Не удалось найти данные игрока или карты в реестре');
       }
 
-      const [pConfig, aiConfig, mConfig] = await Promise.all([
-        useApi()(`${CDN_BASE}${pReg.folder}index.json`),
-        useApi()(`${CDN_BASE}${aiReg.folder}index.json`),
-        useApi()(`${CDN_BASE}${mReg.folder}index.json`),
+      const [playerConfig, aiConfig, mapConfig] = await Promise.all([
+        useApi()(`${config.public.pack}${player.folder}index.json?v=1`),
+        useApi()(`${config.public.pack}${ai.folder}index.json?v=1`),
+        useApi()(`${config.public.pack}${map.folder}index.json?v=1`),
       ]);
 
-      const [pCards, aiCards] = await Promise.all([
-        useApi()(`${CDN_BASE}${pReg.folder}${pConfig.deckFile}`),
-        useApi()(`${CDN_BASE}${aiReg.folder}${aiConfig.deckFile}`),
+      const [playerCards, aiCards] = await Promise.all([
+        useApi()(`${config.public.pack}${player.folder}${playerConfig.deckFile}`),
+        useApi()(`${config.public.pack}${ai.folder}${aiConfig.deckFile}`),
       ]);
 
       return {
         player: {
-          config: pConfig,
-          cards: pCards,
-          folder: pReg.folder,
+          config: playerConfig,
+          cards: playerCards,
+          info: player,
         },
         ai: {
           config: aiConfig,
           cards: aiCards,
-          folder: aiReg.folder,
+          info: ai,
         },
         map: {
-          ...mConfig,
-          folder: mReg.folder,
+          config: mapConfig,
+          info: map,
         },
       };
     },
