@@ -3,7 +3,7 @@ import useUtils from '~/composables/useUtils';
 export default function () {
   const { shuffle } = useUtils();
 
-  const createFighter = (data, startNodeId) => {
+  const createFighter = (data, startNodeId, role) => {
     const { config, cards, info } = data;
 
     const fullDeck = [];
@@ -16,9 +16,11 @@ export default function () {
 
     const nuxtConfig = useRuntimeConfig();
 
-    const fighters = config.heroes.map(i => ({
+    const fighters = config.heroes.map((i, idx) => ({
       ...i,
       ...{
+        active: idx === 0,
+        index: idx,
         type: 'hero',
         currentHp: i.hp,
         position: startNodeId,
@@ -34,6 +36,8 @@ export default function () {
             ...i,
             ...{
               id: `${i.id}_${item + 1}`,
+              active: item === 0,
+              index: item,
               groupId,
               type: 'assistant',
               currentHp: i.hp,
@@ -64,6 +68,8 @@ export default function () {
 
     return {
       id: config.id,
+      role,
+      color: role === 'player' ? "#22d3ee" : "#f87171",
       fighters,
       items,
       hand: shuffledCards.splice(0, 5),

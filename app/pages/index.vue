@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-950 overflow-hidden">
+  <div class="h-dvh bg-slate-950 overflow-hidden">
     <LazyOrganismsIndexStartDisplay hydrate-on-visible v-if="!isGameStarted" />
     <LazyOrganismsIndexBattleBoard hydrate-on-visible v-else />
   </div>

@@ -1,6 +1,6 @@
 <template>
   <section
-    class="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 overflow-hidden px-24"
+    class="relative flex min-h-dvh flex-col items-center justify-center bg-slate-950 overflow-hidden px-24"
   >
     <div class="text-center">
       <h1 class="text-150 font-black italic tracking-tighter uppercase mb-2 drop-shadow-2xl">

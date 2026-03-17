@@ -13,12 +13,13 @@
   --color-white: #ffffff;
   --color-primary: #141414;
   --color-purple: #a357ff;
-  --color-cyan: #22D3EE;
-  --color-violet: #8B5CF6;
-  --color-fuchsia: #D946EF;
+  --color-cyan: #22d3ee;
+  --color-violet: #8b5cf6;
+  --color-fuchsia: #d946ef;
   --color-gray-10: #f1f1f1;
   --color-gray-20: #e7e6ea;
   --color-gray-40: #b3acbd;
+  --color-gray-70: #4a4a4a;
   --font-display: 'Onest Variable', 'sans-serif';
   --default-transition-duration: 0.3s;
   --shadow-top: 0px 4px 8px 0px #1d1d1b29;
@@ -26,11 +27,9 @@
 
 @layer base {
   :root {
-    --spacing: calc(100vw / 360);
-    --spacing: calc(100cqw / 360);
+    --spacing: calc(100dvw / 360);
     @media (min-width: 991px) {
-      --spacing: calc(100vw / 1920);
-      --spacing: calc(100cqw / 1920);
+      --spacing: calc(100dvw / 1920);
     }
   }
   * {
@@ -138,7 +137,12 @@
   }
 
   .text-gradient {
-    background: linear-gradient(to right, var(--color-cyan), var(--color-violet), var(--color-fuchsia));
+    background: linear-gradient(
+      to right,
+      var(--color-cyan),
+      var(--color-violet),
+      var(--color-fuchsia)
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }

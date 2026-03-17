@@ -1,13 +1,12 @@
 <template>
   <div
-    class="flex flex-col relative min-h-screen h-screen max-h-screen max-w-[2560px] mx-auto @container"
+    class="flex flex-col relative max-w-2560 mx-auto overflow-hidden"
     data-layout="default"
   >
-    <main class="flex flex-col flex-1 overflow-x-hidden">
+    <main class="flex flex-col h-dvh overflow-x-hidden">
       <slot />
     </main>
   </div>
 </template>
 
-<script setup>
-</script>
+<script setup></script>

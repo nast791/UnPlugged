@@ -3,10 +3,11 @@ import useGameFactory from '~/composables/useGameFactory';
 
 export const useGameStore = defineStore('game', {
   state: () => ({
-    player: null,
-    ai: null,
     map: null,
     isGameStarted: false,
+    players: [],
+    timer: '00:00',
+    round: 1
   }),
   actions: {
     initGame({ player, ai, map }) {
@@ -22,9 +23,9 @@ export const useGameStore = defineStore('game', {
     
       const p1Node = this.map.nodes.find(i => i.position === 1);
       const p2Node = this.map.nodes.find(i => i.position === 2);
-      
-      if (p1Node) this.player = createFighter(player, p1Node.id);
-      if (p2Node) this.ai = createFighter(ai, p2Node.id);
+
+      if (p1Node) this.players.push(createFighter(player, p1Node.id, 'player'));
+      if (p2Node) this.players.push(createFighter(ai, p2Node.id, 'ai'));
     
       this.isGameStarted = true;
     }
