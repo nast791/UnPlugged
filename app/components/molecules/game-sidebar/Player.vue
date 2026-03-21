@@ -11,7 +11,7 @@
           class="text-20 font-black italic uppercase tracking-tight"
           :style="{ color: item.color }"
         >
-          Игрок №{{ num }}
+          Игрок №{{ item.index }}
         </h3>
         <div class="text-14 font-bold uppercase italic opacity-40 ml-6 self-end mb-2">
           {{ item.role === 'ai' ? 'ИИ' : 'Вы' }}

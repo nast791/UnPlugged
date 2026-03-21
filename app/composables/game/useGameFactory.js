@@ -120,7 +120,9 @@ export default function () {
       assets: config.assets,
       nodes,
       connections,
-      imageSrc: info.image
+      imageSrc: info.image,
+      selectedCircle: null,
+      reachableCircles: [] 
     };
   };
 

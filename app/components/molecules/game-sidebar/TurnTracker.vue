@@ -3,12 +3,12 @@
     <div
       class="p-12 text-center border-r border-white/10 bg-gradient-to-b from-white/5 to-transparent"
     >
-      <p class="text-14 font-black uppercase text-slate-500">Ход</p>
-      <p class="text-26 font-mono font-bold">#{{ round }}</p>
+      <div class="text-14 font-black uppercase text-slate-500">Ход</div>
+      <div class="text-26 font-mono font-bold">#{{ round }}</div>
     </div>
     <div class="p-12 text-center bg-gradient-to-b from-white/5 to-transparent">
-      <p class="text-14 font-black uppercase text-slate-500">Время</p>
-      <p class="text-26 font-mono font-bold">{{ timer }}</p>
+      <div class="text-14 font-black uppercase text-slate-500">Время</div>
+      <div class="text-26 font-mono font-bold">{{ timer }}</div>
     </div>
   </div>
 </template>

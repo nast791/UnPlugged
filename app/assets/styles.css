@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/onest';
 
+@plugin "@headlessui/tailwindcss";
+
 @theme {
   --breakpoint-sm: 360px;
   --breakpoint-lg: 991px;
@@ -10,15 +12,18 @@
   --color-black: #000000;
   --color-black-90: #1a1a1a;
   --color-black-95: #1b1b1b;
+  --color-blue-120: #111318;
   --color-white: #ffffff;
   --color-primary: #141414;
   --color-purple: #a357ff;
   --color-cyan: #22d3ee;
   --color-violet: #8b5cf6;
   --color-fuchsia: #d946ef;
+  --color-fuchsia-10: #ff00ff;
   --color-gray-10: #f1f1f1;
   --color-gray-20: #e7e6ea;
   --color-gray-40: #b3acbd;
+  --color-gray-50: #7a7f8d;
   --color-gray-70: #4a4a4a;
   --font-display: 'Onest Variable', 'sans-serif';
   --default-transition-duration: 0.3s;
@@ -107,6 +112,18 @@
 }
 
 @layer utilities {
+  .os-scroll {
+    & .os-scrollbar {
+      @apply w-6! top-14! lg:top-16! bottom-14! lg:bottom-16! right-8! p-0!;
+    }
+    & .os-scrollbar-track {
+      @apply rounded-full! bg-gray-40!;
+    }
+    & .os-scrollbar-handle {
+      @apply rounded-full! bg-gray-70!;
+    }
+  }
+
   .custom-scrollbar {
     /* Firefox */
     /* @media (min-width: 1025px) {

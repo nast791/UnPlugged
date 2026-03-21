@@ -1,66 +1,66 @@
 <template>
   <div
     class="flex flex-col p-12 rounded-12 bg-linear-to-r from-white/5 to-transparent bg-[#1b1c21] border transition-all border-white/30 relative overflow-hidden group"
-    :class="[item.acted && 'grayscale opacity-50', isStacked && item.index > 0 && '-mt-20']"
+    :class="[
+      item.acted && 'grayscale',
+      isStacked && item.index > 0 && `-mt-50`,
+      isStacked && !item.active && `z-${item.index}`,
+      item.active && `z-1000!`,
+    ]"
     v-if="item && player"
+    @click.stop="setActiveItem()"
   >
     <div class="flex flex-1 justify-between gap-24">
-      <div class="flex gap-8 items-center">
+      <div class="flex flex-1 gap-8 items-center">
         <NuxtImg
           loading="lazy"
           :src="item.imageSrc"
-          class="w-37 h-37 rounded-full border-2 object-cover shadow-xl"
+          class="w-45 h-45 rounded-full border-2 object-cover shadow-xl"
           :style="{ borderColor: player.color }"
           alt=""
         />
-        <div flex flex-col gap-4>
-          <h4 class="font-black text-14 uppercase truncate tracking-wide leading-tight">
-            {{ item.name }}
-          </h4>
-          <p class="text-10 font-bold text-slate-500 uppercase tracking-widest leading-none">
-            {{ item.type === 'hero' ? 'Герой' : 'Помощник' }}
-          </p>
-        </div>
-      </div>
 
-      <div
-        class="flex flex-col items-end gap-2 bg-blue-500/10 px-8 py-2 rounded border border-blue-500/20 leading-tight"
-      >
-        <div class="flex gap-4">
-          <div class="text-14 font-bold text-white font-mono">{{ item.move }}</div>
-          <IconFoot class="text-slate-500 w-15 h-15" />
-        </div>
-        <div class="flex gap-4">
-          <div class="text-14 font-bold text-white font-mono uppercase tracking-wide">
-            {{ item.rangeType }}
-          </div>
-          <IconSwords class="text-slate-500 w-15 h-15" />
-        </div>
-      </div>
-    </div>
+        <div class="flex flex-col flex-1 gap-4">
+          <div class="flex justify-between gap-20 leading-none">
+            <h4 class="font-black text-14 uppercase truncate tracking-wide leading-tight">
+              {{ item.name }}
+            </h4>
 
-    <div class="flex gap-4 relative z-10">
-      <!-- Инфо о бойце -->
-      <div class="flex-1 min-w-0 flex flex-col justify-between">
-        <!-- Визуализация HP -->
-        <div class="mt-12">
-          <div class="flex justify-between items-end mb-4">
-            <span
-              class="text-12 font-black font-mono tracking-tighter"
-              :class="item.currentHp < item.hp / 3 ? 'text-rose-500' : 'text-slate-400'"
-            >
-              {{ item.currentHp }} <span class="opacity-30">/ {{ item.hp }}</span>
-            </span>
-            <span class="text-12 font-bold text-slate-600 uppercase">HP</span>
+            <div class="flex gap-10">
+              <div class="flex gap-4">
+                <div class="text-14 font-bold text-slate-300 font-mono">{{ item.move }}</div>
+                <IconFoot class="text-slate-500 w-12 h-12" />
+              </div>
+
+              <component :is="rangeType" class="text-slate-500 w-13 h-13" />
+            </div>
           </div>
-          <div
-            class="h-6 w-full bg-black/40 rounded-full border border-white/5 p-1.5 overflow-hidden"
-          >
-            <div
-              class="h-6 rounded-full transition-all duration-1000 ease-out relative shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-              :class="getHealthColor(item.currentHp, item.hp)"
-              :style="{ width: (item.currentHp / item.hp) * 100 + '%' }"
-            />
+
+          <div class="flex justify-between gap-20 leading-none">
+            <div class="text-10 font-bold text-slate-500 uppercase tracking-widest leading-none">
+              {{ item.type === 'hero' ? 'Герой' : 'Помощник' }}
+            </div>
+
+            <div class="flex items-end gap-4">
+              <span
+                class="text-12 font-black font-mono"
+                :class="item.currentHp < item.hp / 3 ? 'text-rose-500' : 'text-white'"
+              >
+                {{ item.currentHp
+                }}<span class="text-slate-400"><span class="mx-3">/</span>{{ item.hp }}</span>
+              </span>
+              <span class="text-12 font-extrabold text-slate-500 uppercase tracking-wide">HP</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col">
+            <div class="h-6 w-full bg-black/40 rounded-full border border-white/5 overflow-hidden">
+              <div
+                class="h-6 rounded-full transition-all duration-1000 ease-out relative shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+                :class="getHealthColor(item.currentHp, item.hp)"
+                :style="{ width: (item.currentHp / item.hp) * 100 + '%' }"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -72,16 +72,36 @@
 </template>
 <script setup>
 import IconFoot from '~/svg/footprint.svg';
-import IconSwords from '~/svg/swords.svg';
+import IconSword from '~/svg/sword.svg';
+import IconBow from '~/svg/bow.svg';
+import IconFlail from '~/svg/flail.svg';
 import Note from '~/components/molecules/game-sidebar/Note.vue';
 
-const { count, item, player } = defineProps({
+const { group, item, player } = defineProps({
   item: { type: Object, default: null },
   player: { type: Object, default: null },
-  count: { type: Number, default: 1 },
+  group: { type: Array, default: () => [] },
 });
 
-const isStacked = computed(() => count > 1);
+const isStacked = computed(() => group?.length > 1);
+
+const rangeType = computed(() => {
+  switch (item.rangeType) {
+    case 'melee':
+      return markRaw(IconSword);
+    case 'ranged':
+      return markRaw(IconBow);
+    case 'through 1':
+      return markRaw(IconFlail);
+  }
+});
+
+const setActiveItem = () => {
+  if (item.active) return;
+  const currentActive = group.find(i => i.active);
+  currentActive.active = false;
+  item.active = true;
+};
 
 const getHealthColor = (current, max) => {
   const percent = (current / max) * 100;
@@ -89,25 +109,4 @@ const getHealthColor = (current, max) => {
   if (percent > 20) return 'bg-amber-500';
   return 'bg-rose-600';
 };
-
-const stackStyle = computed(() => {
-  if (!isStacked.value) return { position: 'relative' };
-
-  const step = 35;
-  const isActive = item.active;
-
-  return {
-    gridArea: '1 / 1', // Все карты накладываются друг на друга в одной ячейке
-    // Сдвигаем карты вправо. Активную карту можно НЕ сдвигать или сдвигать чуть-чуть
-    transform: `translateX(${item.index * step}px)`,
-    zIndex: isActive ? 50 : 10 + item.index,
-
-    // Вместо translateY (прыжка вверх), лучше выделить карту яркостью или границей
-    filter: isActive ? 'brightness(1.2)' : 'brightness(0.8)',
-    border: isActive ? `1px solid ${player.color}` : '1px solid rgba(255,255,255,0.05)',
-
-    transition: 'all 0.3s ease-out',
-    maxWidth: 'calc(100% - 60px)', // Ограничиваем ширину, чтобы хвост не вылезал
-  };
-});
 </script>

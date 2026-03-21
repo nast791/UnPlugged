@@ -23,6 +23,8 @@
 </template>
 
 <script setup>
+import useKonvaLoader from '~/composables/konva/useKonvaLoader';
+
 const { imageUrl, position, nodeSize } = defineProps({
   position: { type: Object },
   imageUrl: { type: String },

@@ -4,79 +4,41 @@
   >
     <TurnTracker />
 
-    <!-- Список игроков -->
-    <div class="flex-1 overflow-y-auto p-16 space-y-16">
+    <div class="flex-1 overflow-y-auto p-16 space-y-24">
       <section
-        v-for="(player, index) in players"
+        v-for="player in players"
         :key="player.id"
         class="relative flex flex-col gap-12 transition-all"
         :class="[player.isTurn ? 'opacity-100 scale-100' : 'opacity-70 scale-[0.98]']"
       >
-        <!-- Заголовок игрока -->
-        <Player :item="player" :num="index + 1" />
+        <Player :item="player" />
 
         <!-- Герои  -->
-        <div class="grid gap-12">
+        <div>
           <Fighter
             v-for="unit in player.fighters?.filter(i => i.type === 'hero')"
             :item="unit"
             :player="player"
-            :count="player.fighters?.filter(i => i.type === 'hero')?.length"
+            :group="player.fighters?.filter(i => i.type === 'hero')"
           />
         </div>
 
         <!-- Помощники -->
-        <div
-          :class="[
-            player.fighters?.filter(i => i.type === 'assistant')?.length > 0
-              ? 'flex flex-col'
-              : 'grid gap-12',
-          ]"
-        >
+        <div v-if="player.fighters?.filter(i => i.type === 'assistant')?.length > 0">
           <Fighter
             v-for="unit in player.fighters?.filter(i => i.type === 'assistant')"
-            :count="player.fighters?.filter(i => i.type === 'assistant')?.length"
+            :group="player.fighters?.filter(i => i.type === 'assistant')"
             :item="unit"
             :player="player"
           />
         </div>
 
-        <!-- Нижний ряд: Команды и Карты -->
-        <div class="grid grid-cols-3 gap-2 mt-1">
-          <div class="bg-black/30 p-2 rounded-lg border border-white/5 flex flex-col items-center">
-            <span class="text-lg font-mono font-bold">{{ player.deck?.length || 0 }}</span>
-            <span class="text-[8px] font-black text-slate-600 uppercase tracking-tighter"
-              >Колода</span
-            >
-          </div>
-
-          <button
-            @click="emit('openDiscard', player)"
-            class="bg-red-500/5 hover:bg-red-500/10 p-2 rounded-lg border border-red-500/10 flex flex-col items-center transition-colors"
-          >
-            <span class="text-lg font-mono font-bold text-red-500">{{
-              player.discard?.length || 0
-            }}</span>
-            <span class="text-[8px] font-black text-red-400/60 uppercase tracking-tighter"
-              >Сброс</span
-            >
-          </button>
-
-          <div
-            v-if="player.effectImg"
-            @click="emit('zoomEffect', player.effectImg)"
-            class="rounded-lg overflow-hidden border border-amber-500/30 cursor-pointer hover:scale-105 transition-transform"
-          >
-            <img :src="player.effectImg" class="w-full h-full object-cover" />
-          </div>
-          <div
-            v-else
-            class="bg-black/30 p-2 rounded-lg border border-white/5 flex flex-col items-center opacity-20"
-          >
-            <span class="text-lg opacity-20">—</span>
-            <span class="text-[8px] font-black text-slate-600 uppercase tracking-tighter"
-              >Эффект</span
-            >
+        <div class="flex gap-12 items-center">
+          <IconCards class="w-18 h-18" />
+          <div class="flex gap-8 flex-1">
+            <Card :count="player.deck?.length">Колода</Card>
+            <Card :count="player.hand?.length">Рука</Card>
+            <Card :count="player.discard?.length" :active="true">Сброс</Card>
           </div>
         </div>
       </section>
@@ -84,10 +46,11 @@
   </aside>
 </template>
 <script setup>
+import IconCards from '~/svg/cards.svg';
 import TurnTracker from '~/components/molecules/game-sidebar/TurnTracker.vue';
 import Player from '~/components/molecules/game-sidebar/Player.vue';
 import Fighter from '~/components/molecules/game-sidebar/Fighter.vue';
-import Cards from '~/components/molecules/game-sidebar/Cards.vue';
+import Card from '~/components/molecules/game-sidebar/Card.vue';
 import { useGameStore } from '~/store/game.js';
 
 const { map, players } = storeToRefs(useGameStore());

@@ -6,41 +6,65 @@
       <h2 class="text-2xl font-black italic text-white uppercase">
         <span class="text-cyan">Настройки</span> Битвы
       </h2>
-
-      <div class="flex bg-slate-950 p-4 rounded-12 border border-slate-800">
-        <button
-          @click="selectionMode = 'player'"
-          :class="[
-            'px-16 py-8 rounded-8 text-12 font-black uppercase italic transition-all cursor-pointer',
-            selectionMode === 'player'
-              ? 'bg-cyan text-slate-900'
-              : 'text-slate-500 hover:text-white',
-          ]"
-        >
-          Игрок
-        </button>
-        <button
-          @click="selectionMode = 'ai'"
-          :class="[
-            'px-16 py-8 rounded-8 text-12 font-black uppercase italic transition-all cursor-pointer',
-            selectionMode === 'ai' ? 'bg-fuchsia text-white' : 'text-slate-500 hover:text-white',
-          ]"
-        >
-          ИИ Оппонент
-        </button>
-      </div>
     </header>
 
-    <div class="flex-1 overflow-y-auto p-24 gap-16 flex flex-col">
+    <div class="flex-1 p-24 gap-16 flex flex-col">
       <label class="block text-slate-500 text-18 font-bold uppercase tracking-[0.01em]">
-        {{ selectionMode === 'player' ? 'Выберите вашего героя' : 'Выберите противника' }}
+        Герои
       </label>
 
       <div v-if="isLoading" class="grid grid-cols-4 gap-4 animate-pulse">
         <div v-for="n in 4" :key="n" class="aspect-3/4 bg-slate-800 rounded-xl" />
       </div>
 
-      <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-16">
+      <div class="flex flex-col gap-8" v-else>
+        <div class="flex gap-16 items-center" v-for="(item, index) in counter" :key="item">
+          <div class="text-white min-w-6">
+            {{ index + 1 }}
+          </div>
+
+          <ASelect
+            class="flex-1"
+            :modelValue="players[index]?.id"
+            placeholder="Выберите героя"
+            :options="listHeroes"
+            @active="addPlayer($event, index)"
+          />
+
+          <div
+            class="w-30 h-30 rounded-8"
+            :style="`background: ${players[index].color}`"
+            v-if="players[index]?.color"
+          />
+
+          <div
+            class="flex flex-col gap-4"
+            v-if="
+              (players?.length === counter &&
+                players?.length < MAX &&
+                listHeroes?.filter(i => !i.disabled).length > 0) ||
+              players?.length > 0
+            "
+          >
+            <IconPlus
+              class="text-white w-24 h-24 cursor-pointer"
+              @click="addRow"
+              v-if="
+                players?.length === counter &&
+                players?.length < MAX &&
+                listHeroes?.filter(i => !i.disabled).length > 0
+              "
+            />
+            <IconMinus
+              class="text-white w-24 h-24 cursor-pointer"
+              @click="removeRow(index)"
+              v-if="players?.length > 0"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-16">
         <div
           v-for="hero in heroes"
           :key="hero.id"
@@ -79,30 +103,26 @@
             {{ hero.name }}
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <footer class="p-24 bg-slate-800/30 flex justify-between items-center">
       <div class="flex gap-16 items-center">
         <div class="flex flex-col">
           <span class="text-10 uppercase text-slate-500 font-bold">Игрок:</span>
-          <span class="text-cyan font-black italic uppercase text-14">{{
-            selectedPlayerHero || '???'
-          }}</span>
+          <span class="text-cyan font-black italic uppercase text-14">{{ '???' }}</span>
         </div>
         <div class="w-1 h-24 bg-slate-700"></div>
         <div class="flex flex-col">
           <span class="text-10 uppercase text-slate-500 font-bold">ИИ:</span>
-          <span class="text-fuchsia font-black italic uppercase text-14">{{
-            selectedAiHero || '???'
-          }}</span>
+          <span class="text-fuchsia font-black italic uppercase text-14">{{ '???' }}</span>
         </div>
       </div>
 
       <button
-        :disabled="!selectedPlayerHero || !selectedAiHero"
+        :disabled="players.length < 2"
         class="px-10 py-3 rounded-xl bg-linear-to-r from-brand-violet to-brand-fuchsia text-white font-black italic uppercase tracking-wider disabled:opacity-30 disabled:grayscale transition hover:brightness-110 active:scale-95 disabled:cursor-default cursor-pointer"
-        @click="handleStartBattle"
+        @click="finishPhase"
       >
         Начать битву
       </button>
@@ -110,48 +130,108 @@
   </section>
 </template>
 <script setup>
+// TODO: галка Игрок и ИИ.
+// TODO: по умолчанию галка ставится на 1 героя, если в массиве героев он только 1
+// TODO: при клике по Игроку или ИИ переключается тип
+// TODO: Кнопка начать игру заблокирована, если не выбран ровно 1 игрок
+// TODO: Селект стили
+// TODO: Перетаскивание селектов
+// TODO: Цвет - что-то придумать
+// TODO: В строке селекта в списке выбора показывать аватар, обведенный цветом
+// TODO: Рандомно или нет выбор очередности ходов (тоже переключатель, по умолчанию - не рандомно)
+// TODO: выбор карты - название - макс. кол-во игроков
+
+// TODO: Поиск у селекта по названию.
+// TODO: Сортировка у селекта карт.
+// TODO: Лимит времени на ход (для PVP).
+// TODO: Если игроков 4, нужно выбрать: это режим «2 на 2» или «каждый сам за себя» (Free-for-all).
+// TODO: Уровень сложности ИИ (если выбран хотя бы 1 ИИ).
+// TODO: Рандомный выбор за игрока и/или ИИ
+import IconPlus from '~/svg/plus.svg';
+import IconMinus from '~/svg/minus.svg';
+import ASelect from '~/components/atoms/ASelect.vue';
 import { usePlugins, startBattle } from '~/composables/api/plugins';
 import { useGameStore } from '~/store/game.js';
+import useProcessor from '~/composables/game/useProcessor';
+import useSetup from '~/composables/game/useSetup';
+import useUtils from '~/composables/useUtils';
 
+const MAX = 4;
 const { suspense, heroes, maps, isLoading } = usePlugins();
-const { mutateAsync } = startBattle();
+// const { mutateAsync } = startBattle();
 
 await Promise.all([suspense()]);
 
-const selectedPlayerHero = ref(null);
-const selectedAiHero = ref(null);
-const selectionMode = ref('player');
+// const selectedPlayerHero = ref(null);
+// const selectedAiHero = ref(null);
 
-const handleHeroClick = id => {
-  if (selectionMode.value === 'player') {
-    selectedPlayerHero.value = id;
-    if (!selectedAiHero.value) selectionMode.value = 'ai';
+// const handleStartBattle = async () => {
+//   await mutateAsync(
+//     {
+//       playerId: selectedPlayerHero.value,
+//       aiId: selectedAiHero.value,
+//       mapId: 'alchemy',
+//       heroes,
+//       maps,
+//     },
+//     {
+//       onSuccess: data => {
+//         initGame(data);
+//         emits('close');
+//       },
+//       onError: err => {
+//         console.error('Битва не началась:', err);
+//       },
+//     },
+//   );
+// };
+
+const { players, phase } = storeToRefs(useGameStore());
+const counter = ref(1);
+const emits = defineEmits(['close']);
+
+const { setupNewGame } = useSetup();
+const { process } = useProcessor({ setupNewGame });
+const { cloneDeep } = useUtils();
+
+onMounted(() => {
+  useGameStore().$reset();
+  phase.value = 'GAME_SETUP';
+});
+
+const listHeroes = computed(() =>
+  heroes.value?.map(i => {
+    if (players.value?.find(p => p.id === i.id)) {
+      i.disabled = true;
+    } else {
+      i.disabled = false;
+    }
+    return i;
+  }),
+);
+
+const addPlayer = (item, index) => {
+  const player = cloneDeep(item);
+  delete player.disabled;
+  if (players.value[index]) {
+    players.value[index] = player;
   } else {
-    selectedAiHero.value = id;
+    players.value.push(player);
   }
 };
 
-const { initGame } = useGameStore();
-const emits = defineEmits(['close']);
-
-const handleStartBattle = async () => {
-  await mutateAsync(
-    {
-      playerId: selectedPlayerHero.value,
-      aiId: selectedAiHero.value,
-      mapId: 'alchemy',
-      heroes,
-      maps,
-    },
-    {
-      onSuccess: data => {
-        initGame(data);
-        emits('close');
-      },
-      onError: err => {
-        console.error('Битва не началась:', err);
-      },
-    },
-  );
+const addRow = () => {
+  if (counter.value < MAX) {
+    counter.value++;
+  }
 };
+
+const removeRow = index => {
+  if (counter.value > 1) {
+    players.value?.splice(index, 1);
+    counter.value--;
+  }
+};
+
+const finishPhase = () => {};
 </script>

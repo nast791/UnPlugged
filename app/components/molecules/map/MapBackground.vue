@@ -6,6 +6,8 @@
   />
 </template>
 <script setup>
+import useKonvaLoader from '~/composables/konva/useKonvaLoader';
+
 const {imageUrl} = defineProps({
   imageUrl: String,
 });

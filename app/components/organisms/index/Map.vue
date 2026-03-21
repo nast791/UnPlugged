@@ -46,6 +46,7 @@ import MapHero from '~/components/molecules/map/MapHero.vue';
 import MapBackground from '~/components/molecules/map/MapBackground.vue';
 import { useGameStore } from '~/store/game.js';
 import { usePlugins } from '~/composables/api/plugins';
+import useKonvaCamera from '~/composables/konva/useKonvaCamera';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
