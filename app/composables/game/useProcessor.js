@@ -15,20 +15,28 @@ export default function (actions = {}) {
   };
 
   // Следим за изменением фазы (вход в фазу)
-  watch(phase, (newPhase) => {
-    const config = GAME_PHASES.find(i => i.id === newPhase);
-    isPhaseAction.value = false; 
-    if (config?.auto) process();
-  }, { immediate: true });
+  watch(
+    phase,
+    newPhase => {
+      const config = GAME_PHASES.find(i => i.id === newPhase);
+      isPhaseAction.value = false;
+      if (config?.auto) process();
+    },
+    { immediate: true },
+  );
 
   // Следим за условиями переходов (реактивно)
-  watch(store, (state) => {
-    const config = GAME_PHASES.find(i => i.id === phase.value);
-    if (!config?.transitions) return;
+  watch(
+    store,
+    state => {
+      const config = GAME_PHASES.find(i => i.id === phase.value);
+      if (!config?.transitions) return;
 
-    const transition = config.transitions.find(t => t.condition(state));
-    if (transition) phase.value = transition.to;
-  }, { deep: true });
+      const transition = config.transitions.find(t => t.condition(state));
+      if (transition) phase.value = transition.to;
+    },
+    { deep: true },
+  );
 
   return { process };
 }

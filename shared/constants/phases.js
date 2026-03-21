@@ -6,27 +6,23 @@ export default [
     description: () => 'Настройка параметров игры',
     auto: false,
     onEnter: (store, { setupNewGame }) => {
-      setupNewGame(); 
+      setupNewGame();
     },
-    transitions: [
-      { to: 'GAME_INIT', condition: (ctx) => ctx.isSetupComplete }
-    ]
+    transitions: [{ to: 'GAME_INIT', condition: ctx => ctx.isSetupComplete }],
   },
   {
     id: 'GAME_INIT',
     auto: true,
     description: () => 'Подготовка колод и создание бойцов',
     // onEnter: (store, { initCards }) => {
-    //   initCards(); 
+    //   initCards();
     // },
-    transitions: [
-      { to: 'UNIT_PLACEMENT', condition: (ctx) => ctx.isGameInitialized }
-    ]
+    transitions: [{ to: 'UNIT_PLACEMENT', condition: ctx => ctx.isGameInitialized }],
   },
   {
     id: 'UNIT_PLACEMENT',
-    description: (ctx) => `Игрок ${ctx.activePlayer.name}: расставьте своих бойцов на поле`,
-    transitions: [{ to: 'START_TURN', condition: (ctx) => ctx.isPlacementComplete }]
+    description: ctx => `Игрок ${ctx.activePlayer.name}: расставьте своих бойцов на поле`,
+    transitions: [{ to: 'START_TURN', condition: ctx => ctx.isPlacementComplete }],
   },
   {
     id: 'START_TURN',

@@ -114,43 +114,14 @@
 @layer utilities {
   .os-scroll {
     & .os-scrollbar {
-      @apply w-6! top-14! lg:top-16! bottom-14! lg:bottom-16! right-8! p-0!;
+      @apply w-10!;
     }
-    & .os-scrollbar-track {
+    /* & .os-scrollbar-track {
       @apply rounded-full! bg-gray-40!;
-    }
-    & .os-scrollbar-handle {
-      @apply rounded-full! bg-gray-70!;
-    }
-  }
-
-  .custom-scrollbar {
-    /* Firefox */
-    /* @media (min-width: 1025px) {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
     } */
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    @apply w-4;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    /* @apply rounded-8 bg-gray-10; */
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-8 bg-primary;
-  }
-
-  .scrollbar-hidden {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    overflow-y: scroll;
-  }
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none;
+    & .os-scrollbar-handle {
+      @apply rounded-full! bg-slate-400/40!;
+    }
   }
 
   .text-gradient {
