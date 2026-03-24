@@ -18,6 +18,16 @@ export default {
             },
           },
         },
+        {
+          path: 'game/:id',
+          name: 'game-id',
+          component: () => import('@/pages/game.vue'),
+          meta: {
+            seo: {
+              title: 'Битва',
+            },
+          },
+        },
       ],
     },
   ],

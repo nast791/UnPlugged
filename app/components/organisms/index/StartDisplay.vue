@@ -1,6 +1,6 @@
 <template>
   <section
-    class="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 overflow-hidden px-24"
+    class="relative flex min-h-dvh flex-col items-center justify-center bg-slate-950 overflow-hidden px-24"
   >
     <div class="text-center">
       <h1 class="text-150 font-black italic tracking-tighter uppercase mb-2 drop-shadow-2xl">
@@ -22,15 +22,13 @@
       </button>
     </div>
 
-    <teleport to="body">
-      <AModal v-if="isModalOpen" @close="isModalOpen = false">
-        <GameSettings @close="isModalOpen = false"/>
-      </AModal>
-    </teleport>
+    <Modal v-model="isModalOpen">
+      <GameSettings @close="isModalOpen = false" />
+    </Modal>
   </section>
 </template>
 <script setup>
-import AModal from '~/components/atoms/AModal.vue';
+import Modal from '~/components/atoms/Modal.vue';
 import GameSettings from '~/components/organisms/index/GameSettings.vue';
 const isModalOpen = ref(false);
 </script>

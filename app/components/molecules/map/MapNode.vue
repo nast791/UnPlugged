@@ -4,8 +4,6 @@
       :config="{
         radius: nodeSize / 2,
         fill: isHovered ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-        stroke: '#000000',
-        strokeWidth: 2 / scale,
       }"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"

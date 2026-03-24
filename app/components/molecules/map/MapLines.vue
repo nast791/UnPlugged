@@ -7,7 +7,7 @@
         points: line.points,
         stroke: 'red',
         strokeWidth: 5,
-        opacity: 0.3,
+        opacity: 0,
       }"
     />
   </v-group>

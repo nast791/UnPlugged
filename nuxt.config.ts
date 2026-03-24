@@ -10,6 +10,13 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
+      include: [
+        'overlayscrollbars-vue',
+        '@vueuse/core',
+        '@tanstack/vue-query',
+        '@headlessui/vue',
+        'radix-vue/nuxt',
+      ],
       esbuildOptions: {
         define: {
           global: 'window',
@@ -24,8 +31,21 @@ export default defineNuxtConfig({
       cssMinify: 'lightningcss',
     },
   },
+  imports: {
+    presets: [
+      {
+        from: 'tailwind-variants',
+        imports: ['tv'],
+      },
+    ],
+  },
   nitro: {
     compressPublicAssets: true,
+  },
+  runtimeConfig: {
+    public: {
+      pack: '',
+    },
   },
   app: {
     head: {
@@ -51,18 +71,20 @@ export default defineNuxtConfig({
     layoutTransition: false,
   },
   css: ['~/assets/styles.css'],
-  modules: ['@pinia/nuxt', '@nuxt/image', '@peterbud/nuxt-query'],
-  // image: {
-  //   format: ['avif', 'webp'], // AVIF приоритетнее в 2026 году
-  //   screens: {
-  //     sm: 360,
-  //     md: 767,
-  //     lg: 1025,
-  //     xl: 1920,
-  //   },
-  // },
+  modules: [
+    '@pinia/nuxt',
+    '@nuxt/image',
+    '@peterbud/nuxt-query',
+    '@pinia-plugin-persistedstate/nuxt',
+    'nuxt-headlessui',
+    '@headlessui-float/nuxt',
+    'radix-vue/nuxt'
+  ],
+  headlessui: {
+    prefix: 'H',
+  },
   nuxtQuery: {
-    autoImports: ['useQuery', 'useMutation'],
+    autoImports: ['useQuery', 'useMutation', 'useQueries'],
     devtools: true,
     queryClientOptions: {
       defaultOptions: {
@@ -87,4 +109,4 @@ export default defineNuxtConfig({
     payloadExtraction: true,
     typedPages: true,
   },
-})
+});
