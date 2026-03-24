@@ -10,7 +10,13 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['overlayscrollbars-vue', '@vueuse/core', '@tanstack/vue-query', '@headlessui/vue'],
+      include: [
+        'overlayscrollbars-vue',
+        '@vueuse/core',
+        '@tanstack/vue-query',
+        '@headlessui/vue',
+        'radix-vue/nuxt',
+      ],
       esbuildOptions: {
         define: {
           global: 'window',
@@ -24,6 +30,14 @@ export default defineNuxtConfig({
     build: {
       cssMinify: 'lightningcss',
     },
+  },
+  imports: {
+    presets: [
+      {
+        from: 'tailwind-variants',
+        imports: ['tv'],
+      },
+    ],
   },
   nitro: {
     compressPublicAssets: true,
@@ -63,13 +77,14 @@ export default defineNuxtConfig({
     '@peterbud/nuxt-query',
     '@pinia-plugin-persistedstate/nuxt',
     'nuxt-headlessui',
-    '@headlessui-float/nuxt'
+    '@headlessui-float/nuxt',
+    'radix-vue/nuxt'
   ],
   headlessui: {
     prefix: 'H',
   },
   nuxtQuery: {
-    autoImports: ['useQuery', 'useMutation'],
+    autoImports: ['useQuery', 'useMutation', 'useQueries'],
     devtools: true,
     queryClientOptions: {
       defaultOptions: {

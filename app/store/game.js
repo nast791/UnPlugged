@@ -7,7 +7,6 @@ export const useGameStore = defineStore('game', {
     id: null,
     phase: null,
     isPhaseAction: false,
-    isSetupComplete: false,
     map: null,
     isGameStarted: false,
     isGameInitialized: false,
@@ -30,7 +29,7 @@ export const useGameStore = defineStore('game', {
   },
   persist: [
     {
-      paths: ['gameId', 'phase'],
+      paths: ['id', 'phase'],
       storage: persistedState.cookies, // Сервер увидит эти данные сразу
     },
     {

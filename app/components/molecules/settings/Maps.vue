@@ -3,9 +3,8 @@
     <h3 class="block text-slate-500 text-18 font-bold uppercase tracking-[0.01em]">Карта</h3>
 
     <div class="flex flex-col gap-8">
-      <ASelect
-        class="flex-1"
-        :modelValue="map"
+      <Select
+        :modelValue="map?.id"
         placeholder="Выберите поле"
         :options="listMaps"
         @update:modelValue="addMap"
@@ -20,14 +19,14 @@
             </span>
           </div>
         </template>
-      </ASelect>
+      </Select>
     </div>
   </div>
 </template>
 <script setup>
-import ASelect from '~/components/atoms/ASelect.vue';
 import { useGameStore } from '~/store/game.js';
 import useUtils from '~/composables/useUtils';
+import Select from '~/components/atoms/Select.vue';
 
 const { maps } = defineProps({
   maps: Array,
@@ -44,7 +43,8 @@ const listMaps = computed(
     }) || [],
 );
 
-const addMap = item => {
+const addMap = id => {
+  const item = maps.find(i => i.id === id);
   const field = cloneDeep(item);
   delete field.disabled;
   map.value = field;

@@ -22,15 +22,13 @@
       </button>
     </div>
 
-    <teleport to="body">
-      <AModal v-if="isModalOpen" @close="isModalOpen = false">
-        <GameSettings @close="isModalOpen = false"/>
-      </AModal>
-    </teleport>
+    <Modal v-model="isModalOpen">
+      <GameSettings @close="isModalOpen = false" />
+    </Modal>
   </section>
 </template>
 <script setup>
-import AModal from '~/components/atoms/AModal.vue';
+import Modal from '~/components/atoms/Modal.vue';
 import GameSettings from '~/components/organisms/index/GameSettings.vue';
 const isModalOpen = ref(false);
 </script>

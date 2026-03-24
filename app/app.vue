@@ -22,5 +22,4 @@ import { useAppStore } from '~/store/app.js';
 
 const route = useRoute();
 const { stopScrollingPage } = storeToRefs(useAppStore());
-provideHeadlessUseId(() => useId());
 </script>

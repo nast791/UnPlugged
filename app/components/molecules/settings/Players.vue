@@ -8,86 +8,59 @@
           {{ index + 1 }}
         </div>
 
-        
-        <ASelect
+        <Select
           class="flex-1"
-          :modelValue="players[index]"
+          :modelValue="players[index]?.id"
           placeholder="Выберите героя"
           :options="listHeroes"
           @update:modelValue="addPlayer($event, index)"
         >
           <template #header>
-            <ASwitch
-              v-model="players[index].type"
+            <Switch
+              class="w-full"
+              :modelValue="players[index]?.type"
               :trueValue="{ id: 'player', name: 'Игрок' }"
               :falseValue="{ id: 'ai', name: 'ИИ' }"
+              @click.stop
+              @pointerdown.stop
               v-if="players[index]?.type"
-            >
-              <template #default="{ checked, label }">
-                <div class="flex gap-6 w-full">
-                  <IconChecked
-                    v-if="checked"
-                    class="w-14 h-14 text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]"
-                  />
-                  <div
-                    class="text-12 font-bold uppercase tracking-widest transition-colors select-none text-cyan-500 ui-checked:text-emerald-400"
-                  >
-                    {{ label }}
-                  </div>
-                </div>
-              </template>
-            </ASwitch>
+            />
           </template>
           <template #option="{ item, selected, active }">
             <div class="flex items-center gap-8">
-              <AAvatar
-                :src="item.avatar"
+              <Avatar
+                :src="item.image"
+                :alt="item.name"
                 :color="item.color"
-                :isActive="active || selected"
-                size="40"
+                :isActive="active || selected || false"
+                size="md"
               />
               <div>{{ item.name }}</div>
             </div>
           </template>
-        </ASelect>
+        </Select>
 
+        <Controls 
+          :show-plus="players?.length === counter && players.length < MAX && hasHeroes"
+          :show-minus="players.length > 0"
+          @add="addRow"
+          @remove="removeRow(index)"
+          v-if="players?.length > 0"
+        />
 
-        <div
-          class="flex flex-col gap-2 shrink-0"
-          v-if="
-            (players?.length === counter &&
-              players?.length < MAX &&
-              listHeroes?.filter(i => !i.disabled).length > 0) ||
-            players?.length > 0
-          "
-        >
-          <Stepper
-            type="plus"
-            @click="addRow"
-            v-if="
-              players?.length === counter &&
-              players?.length < MAX &&
-              listHeroes?.filter(i => !i.disabled).length > 0
-            "
-          />
-          <Stepper type="minus" @click="removeRow(index)" v-if="players?.length > 0" />
-        </div>
-
-
-        <AColorBadge :color="players[index].color" v-if="players[index]?.color" />
+        <ColorPicker v-model="players[index].color" v-if="players[index]?.color"/>
       </div>
     </div>
   </div>
 </template>
 <script setup>
-import IconChecked from '~/svg/checked.svg';
-import ASelect from '~/components/atoms/ASelect.vue';
-import AAvatar from '~/components/atoms/AAvatar.vue';
-import AColorBadge from '~/components/atoms/AColorBadge.vue';
-import ASwitch from '~/components/atoms/ASwitch.vue';
-import Stepper from '~/components/molecules/settings/Stepper.vue';
+import Avatar from '~/components/atoms/Avatar.vue';
+import ColorPicker from '~/components/atoms/ColorPicker.vue';
+import Switch from '~/components/atoms/Switch.vue';
+import Controls from '~/components/molecules/settings/Controls.vue';
 import { useGameStore } from '~/store/game.js';
 import useUtils from '~/composables/useUtils';
+import Select from '~/components/atoms/Select.vue';
 
 const { heroes } = defineProps({
   heroes: Array,
@@ -106,10 +79,14 @@ const listHeroes = computed(
     }) || [],
 );
 
-const addPlayer = (item, index) => {
+const hasHeroes = computed(() => listHeroes.value?.filter(i => !i.disabled).length > 0);
+
+const addPlayer = (id, index) => {
+  const item = heroes.find(i => i.id === id);
   const player = cloneDeep(item);
   delete player.disabled;
   player.type = !players.value?.length ? 'player' : 'ai';
+  player.index = index + 1;
   if (players.value[index]) {
     players.value[index] = player;
   } else {

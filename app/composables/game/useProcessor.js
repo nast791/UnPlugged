@@ -33,7 +33,7 @@ export default function (actions = {}) {
       if (!config?.transitions) return;
 
       const transition = config.transitions.find(t => t.condition(state));
-      if (transition) phase.value = transition.to;
+      if (transition && isPhaseAction.value) phase.value = transition.to;
     },
     { deep: true },
   );

@@ -21,10 +21,10 @@ export default {
         {
           path: 'game/:id',
           name: 'game-id',
-          component: () => import('@/pages/index.vue'),
+          component: () => import('@/pages/game.vue'),
           meta: {
             seo: {
-              title: 'Арена: игра',
+              title: 'Битва',
             },
           },
         },

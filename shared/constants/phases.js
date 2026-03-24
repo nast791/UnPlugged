@@ -8,15 +8,17 @@ export default [
     onEnter: (store, { setupNewGame }) => {
       setupNewGame();
     },
-    transitions: [{ to: 'GAME_INIT', condition: ctx => ctx.isSetupComplete }],
+    transitions: [
+      { to: 'GAME_INIT', condition: ctx => ctx.id && ctx.map && ctx.players?.length > 1 },
+    ],
   },
   {
     id: 'GAME_INIT',
-    auto: true,
+    auto: false,
     description: () => 'Подготовка колод и создание бойцов',
-    // onEnter: (store, { initCards }) => {
-    //   initCards();
-    // },
+    onEnter: (store, { runInit }) => {
+      runInit();
+    },
     transitions: [{ to: 'UNIT_PLACEMENT', condition: ctx => ctx.isGameInitialized }],
   },
   {

@@ -9,8 +9,8 @@
 </template>
 
 <script setup>
-import Map from '~/components/organisms/index/Map.vue';
-import GameSidebar from '~/components/organisms/index/GameSidebar.vue';
+import Map from '~/components/organisms/game/Map.vue';
+import GameSidebar from '~/components/organisms/game/GameSidebar.vue';
 import { useGameStore } from '~/store/game.js';
 
 const { map, players } = storeToRefs(useGameStore());
