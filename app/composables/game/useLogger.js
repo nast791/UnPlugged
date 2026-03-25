@@ -4,7 +4,7 @@ import { useGameStore } from '~/store/game.js';
 export default function () {
   const { history, activePlayer, turn, phase } = storeToRefs(useGameStore());
 
-  const addLog = (message, type = LOG_TYPES.SYSTEM.id) => {
+  const addLog = (message, type = LOG_TYPES.SYSTEM.id, options = null) => {
     history.value.push({
       id: crypto.randomUUID(),
       type,
@@ -12,7 +12,8 @@ export default function () {
       turn: turn.value,
       playerId: activePlayer.value?.id,
       phase: phase.value,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      options
     });
   }
 

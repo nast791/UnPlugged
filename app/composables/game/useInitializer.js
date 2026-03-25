@@ -2,7 +2,7 @@ import { useGameStore } from '~/store/game.js';
 import useUtils from '~/composables/useUtils';
 
 export default function () {
-  const { players, map } = storeToRefs(useGameStore());
+  const { players, map, activePlayerIndex } = storeToRefs(useGameStore());
   const { shuffle } = useUtils();
   const nuxtConfig = useRuntimeConfig();
 
@@ -22,7 +22,9 @@ export default function () {
           type: 'hero',
           image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
           currentHp: i.hp,
-          position: null
+          position: null,
+          acted: false,
+          active: false
         }
 
         return {...i, ...info};
@@ -35,6 +37,8 @@ export default function () {
             currentHp: i.hp,
             position: null,
             image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
+            acted: false,
+            active: false
           };
           if (i.count) {
             info.group = i.id;
@@ -69,45 +73,52 @@ export default function () {
         hand: shuffledCards.splice(0, 5),
         deck: shuffledCards,
         discard: [],
+        actionsPoints: 2,
+        actionsUsed: 0
       };
     });
-    //   // 1. Перемешиваем колоду
-    //   const fullDeck = [...hero.cards].sort(() => Math.random() - 0.5);
 
-    //   // 2. Раздаем стартовую руку (5 карт)
-    //   const hand = fullDeck.splice(0, 5);
+    const radius = map.value?.settings?.nodeSize / 2;
 
-    //   // 3. Формируем объект игрока
-    //   return {
-    //     index,
-    //     id: hero.id,
-    //     name: hero.name,
-    //     hp: hero.hp,
-    //     moveValue: hero.moveValue,
-    //     hand: hand,
-    //     deck: fullDeck,
-    //     discard: [],
-    //     // Создаем массив всех бойцов игрока (герой + помощники)
-    //     units: [
-    //       {
-    //         id: `${hero.id}_main`,
-    //         name: hero.name,
-    //         type: 'hero',
-    //         hp: hero.hp,
-    //         position: null // Пока не на поле
-    //       },
-    //       ...hero.sidekicks.map((s, i) => ({
-    //         id: `${hero.id}_sidekick_${i}`,
-    //         name: s.name,
-    //         type: 'sidekick',
-    //         hp: s.hp,
-    //         position: null
-    //       }))
-    //     ]
-    //   };
-    // });
+    const circles = computed(() => {
+      return (map.value?.nodes || []).map(node => ({
+        ...node,
+        x: node.x + radius,
+        y: node.y + radius,
+      }));
+    });
 
-    // store.isGameInitialized = true;
+    const connections = computed(() => {
+      const res = [];
+      circles.value.forEach(node => {
+        node.neighbors?.forEach(neighborId => {
+          const nId = Number(neighborId);
+          const cId = Number(node.id);
+
+          if (nId > cId) {
+            const target = circles.value.find(i => Number(i.id) === nId);
+            if (target) {
+              res.push({
+                points: [node.x, node.y, target.x, target.y],
+                id: `l-${cId}-${nId}`,
+              });
+            }
+          }
+        });
+      });
+      return res;
+    });
+
+    map.value = {
+      ...map.value,
+      radius,
+      circles, 
+      connections, 
+      selectedCircle: null, 
+      reachableCircles: []
+    }
+
+    activePlayerIndex.value = 1;
   };
 
   return { runInit };

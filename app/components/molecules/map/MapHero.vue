@@ -1,9 +1,9 @@
 <template>
-  <v-group ref="imageNode" :config="imageConfig">
+  <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y">
     <!-- Внешнее кольцо (подсветка хода) -->
     <v-circle
       :config="{
-        radius: nodeSize / 4 + 1,
+        radius: nodeSize / 3 + 1,
         stroke: color,
         strokeWidth: 3 / scale,
       }"
@@ -12,10 +12,10 @@
     <v-image
       :config="{
         image: heroImg,
-        width: nodeSize / 2,
-        height: nodeSize / 2,
-        x: -nodeSize / 4,
-        y: -nodeSize / 4,
+        width: nodeSize / 1.5,
+        height: nodeSize / 1.5,
+        x: -nodeSize / 3,
+        y: -nodeSize / 3,
         cornerRadius: nodeSize / 2,
       }"
     />
@@ -31,14 +31,14 @@ const { imageUrl, position, nodeSize } = defineProps({
   nodeSize: { type: Number },
   scale: { type: Number },
   color: { type: String },
+  id: { type: [String, Number] },
 });
 
 const { loadAsset } = useKonvaLoader();
 const heroImg = ref(null);
 const imageNode = ref(null);
 
-const imageConfig = computed(() => ({
-  image: heroImg.value,
+const groupConfig = computed(() => ({
   x: position?.x || 0,
   y: position?.y || 0,
   width: nodeSize,

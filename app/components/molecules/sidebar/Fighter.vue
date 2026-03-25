@@ -3,8 +3,8 @@
     class="flex flex-col p-12 rounded-12 bg-linear-to-r from-white/5 to-transparent bg-[#1b1c21] border transition-all border-white/30 relative overflow-hidden group"
     :class="[
       item.acted && 'grayscale',
-      isStacked && item.index > 0 && `-mt-50`,
-      isStacked && !item.active && `z-${item.index}`,
+      isStacked && index > 0 && `-mt-50`,
+      isStacked && !item.active && `z-${index}`,
       item.active && `z-1000!`,
     ]"
     v-if="item && player"
@@ -14,10 +14,14 @@
       <div class="flex flex-1 gap-8 items-center">
         <NuxtImg
           loading="lazy"
-          :src="item.imageSrc"
+          :src="item.image"
           class="w-45 h-45 rounded-full border-2 object-cover shadow-xl"
+          :class="[isDraggable && 'cursor-grab']"
           :style="{ borderColor: player.color }"
           alt=""
+          :draggable="isDraggable"
+          @dragstart="onDragStart"
+          @dragend="onDragEnd"
         />
 
         <div class="flex flex-col flex-1 gap-4">
@@ -75,7 +79,8 @@ import IconFoot from '~/svg/footprint.svg';
 import IconSword from '~/svg/sword.svg';
 import IconBow from '~/svg/bow.svg';
 import IconFlail from '~/svg/flail.svg';
-import Note from '~/components/molecules/game-sidebar/Note.vue';
+import Note from '~/components/molecules/sidebar/Note.vue';
+import { useGameStore } from '~/store/game.js';
 
 const { group, item, player } = defineProps({
   item: { type: Object, default: null },
@@ -83,7 +88,12 @@ const { group, item, player } = defineProps({
   group: { type: Array, default: () => [] },
 });
 
+const { activePlayerIndex, phase } = storeToRefs(useGameStore());
 const isStacked = computed(() => group?.length > 1);
+const isDraggable = computed(
+  () => activePlayerIndex.value === player.index && phase.value === 'UNIT_PLACEMENT',
+);
+const index = computed(() => group.findIndex(i => i.id === item.id));
 
 const rangeType = computed(() => {
   switch (item.rangeType) {
@@ -99,7 +109,7 @@ const rangeType = computed(() => {
 const setActiveItem = () => {
   if (item.active) return;
   const currentActive = group.find(i => i.active);
-  currentActive.active = false;
+  if (currentActive) currentActive.active = false;
   item.active = true;
 };
 
@@ -108,5 +118,17 @@ const getHealthColor = (current, max) => {
   if (percent > 50) return 'bg-emerald-500';
   if (percent > 20) return 'bg-amber-500';
   return 'bg-rose-600';
+};
+
+const onDragStart = e => {
+  e.dataTransfer.setData('fighterId', item.id);
+  item.drag = true;
+  e.dataTransfer.effectAllowed = 'move';
+  const dragIcon = e.target;
+  e.dataTransfer.setDragImage(dragIcon, 24, 24);
+};
+
+const onDragEnd = e => {
+  delete item.drag;
 };
 </script>
