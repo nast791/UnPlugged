@@ -526,6 +526,13 @@
   dependencies:
     "@iconify/types" "*"
 
+"@iconify/collections@^1.0.641":
+  version "1.0.666"
+  resolved "https://registry.yarnpkg.com/@iconify/collections/-/collections-1.0.666.tgz#806873cd8f3a95e9891fc7bf0d342e6854ef1c4d"
+  integrity sha512-dAwFrwbb0exAEJeM9sbLhCTcTcFxUpzvH2fm0dLKCJ10QMna0MSWKEk3Z0QM75QT2d13m9zytjcMSZxUEQt9iw==
+  dependencies:
+    "@iconify/types" "*"
+
 "@iconify/types@*", "@iconify/types@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@iconify/types/-/types-2.0.0.tgz#ab0e9ea681d6c8a1214f30cd741fe3a20cc57f57"
@@ -539,6 +546,13 @@
     "@antfu/install-pkg" "^1.1.0"
     "@iconify/types" "^2.0.0"
     mlly "^1.8.0"
+
+"@iconify/vue@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@iconify/vue/-/vue-5.0.0.tgz#c47e4b3a225a64bbf28dce924934f23e54b061a4"
+  integrity sha512-C+KuEWIF5nSBrobFJhT//JS87OZ++QDORB6f2q2Wm6fl2mueSTpFBeBsveK0KW9hWiZ4mNiPjsh6Zs4jjdROSg==
+  dependencies:
+    "@iconify/types" "^2.0.0"
 
 "@img/colour@^1.0.0":
   version "1.1.0"
@@ -877,6 +891,14 @@
     "@nuxt/kit" "^4.3.1"
     execa "^8.0.1"
 
+"@nuxt/devtools-kit@^3.1.1":
+  version "3.2.4"
+  resolved "https://registry.yarnpkg.com/@nuxt/devtools-kit/-/devtools-kit-3.2.4.tgz#496004ea0f4c1647c633ffa9ece874b8ff146a4c"
+  integrity sha512-Yxy2Xgmq5hf3dQy983V0xh0OJV2mYwRZz9eVIGc3EaribdFGPDNGMMbYqX9qCty3Pbxn/bCF3J0UyPaNlHVayQ==
+  dependencies:
+    "@nuxt/kit" "^4.4.2"
+    execa "^8.0.1"
+
 "@nuxt/devtools-ui-kit@^3.2.2":
   version "3.2.3"
   resolved "https://registry.yarnpkg.com/@nuxt/devtools-ui-kit/-/devtools-ui-kit-3.2.3.tgz#a14e74b23ddf86495c157aedb7151a60d374e258"
@@ -955,6 +977,26 @@
     which "^5.0.0"
     ws "^8.19.0"
 
+"@nuxt/icon@2.2.1":
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@nuxt/icon/-/icon-2.2.1.tgz#0155537f34896ea552fe76e2d5bf7555d55f397f"
+  integrity sha512-GI840yYGuvHI0BGDQ63d6rAxGzG96jQcWrnaWIQKlyQo/7sx9PjXkSHckXUXyX1MCr9zY6U25Td6OatfY6Hklw==
+  dependencies:
+    "@iconify/collections" "^1.0.641"
+    "@iconify/types" "^2.0.0"
+    "@iconify/utils" "^3.1.0"
+    "@iconify/vue" "^5.0.0"
+    "@nuxt/devtools-kit" "^3.1.1"
+    "@nuxt/kit" "^4.2.2"
+    consola "^3.4.2"
+    local-pkg "^1.1.2"
+    mlly "^1.8.0"
+    ohash "^2.0.11"
+    pathe "^2.0.3"
+    picomatch "^4.0.3"
+    std-env "^3.10.0"
+    tinyglobby "^0.2.15"
+
 "@nuxt/image@2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@nuxt/image/-/image-2.0.0.tgz#62ac3ee383bd3c6bb89f95508fc9cb91cdd21220"
@@ -1026,7 +1068,7 @@
     unctx "^2.5.0"
     untyped "^2.0.0"
 
-"@nuxt/kit@^4.2.1":
+"@nuxt/kit@^4.2.1", "@nuxt/kit@^4.4.2":
   version "4.4.2"
   resolved "https://registry.yarnpkg.com/@nuxt/kit/-/kit-4.4.2.tgz#272e5a80b4879d6612ab0bee86159e4ad6171e72"
   integrity sha512-5+IPRNX2CjkBhuWUwz0hBuLqiaJPRoKzQ+SvcdrQDbAyE+VDeFt74VpSFr5/R0ujrK4b+XnSHUJWdS72w6hsog==

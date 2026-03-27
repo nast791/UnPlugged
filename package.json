@@ -18,6 +18,7 @@
     "@headlessui-float/nuxt": "0.15.1",
     "@headlessui-float/vue": "0.15.1",
     "@headlessui/tailwindcss": "0.2.2",
+    "@nuxt/icon": "2.2.1",
     "@nuxt/image": "2.0.0",
     "@nuxtjs/supabase": "2.0.4",
     "@peterbud/nuxt-query": "1.6.0",

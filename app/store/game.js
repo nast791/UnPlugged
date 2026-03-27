@@ -10,7 +10,7 @@ export const useGameStore = defineStore('game', {
     isGameStarted: false,
     activePlayerIndex: 0,
     players: [],
-    timer: '00:00',
+    timer: 0,
     turn: 0,
     intent: {
       selectedAction: null,
