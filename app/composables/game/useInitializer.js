@@ -24,10 +24,10 @@ export default function () {
           currentHp: i.hp,
           position: null,
           acted: false,
-          active: false
-        }
+          active: false,
+        };
 
-        return {...i, ...info};
+        return { ...i, ...info };
       });
 
       player.assistants?.forEach(i => {
@@ -38,7 +38,7 @@ export default function () {
             position: null,
             image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
             acted: false,
-            active: false
+            active: false,
           };
           if (i.count) {
             info.group = i.id;
@@ -73,8 +73,9 @@ export default function () {
         hand: shuffledCards.splice(0, 5),
         deck: shuffledCards,
         discard: [],
+        activeCardBtns: [{ id: player.id, type: 'hand' }],
         actionsPoints: 2,
-        actionsUsed: 0
+        actionsUsed: 0,
       };
     });
 
@@ -112,11 +113,11 @@ export default function () {
     map.value = {
       ...map.value,
       radius,
-      circles, 
-      connections, 
-      selectedCircle: null, 
-      reachableCircles: []
-    }
+      circles,
+      connections,
+      selectedCircle: null,
+      reachableCircles: [],
+    };
 
     activePlayerIndex.value = 1;
   };

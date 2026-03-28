@@ -11,7 +11,7 @@
         <div class="flex items-center gap-2">
           <h3
             class="text-20 font-black italic uppercase tracking-tight"
-            :style="{ color: item.color }"
+            :style="{ color: getContrastColor(item.color) <= 90 ? '#FFFFFF' : item.color }"
           >
             Игрок {{ item.index }}
           </h3>
@@ -45,6 +45,7 @@
 </template>
 <script setup>
 import { useGameStore } from '~/store/game.js';
+import useUtils from '~/composables/useUtils';
 
 const { item } = defineProps({
   item: { type: Object, default: null },
@@ -54,4 +55,6 @@ const { item } = defineProps({
 const { activePlayerIndex, isGameStarted } = storeToRefs(useGameStore());
 const role = computed(() => (item.type === 'ai' ? 'ИИ' : 'Вы'));
 const isTurn = computed(() => +activePlayerIndex.value === +item.index);
+
+const { getContrastColor } = useUtils();
 </script>

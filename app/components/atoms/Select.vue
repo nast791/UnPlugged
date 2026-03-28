@@ -23,10 +23,7 @@
         :avoid-collisions="true"
       >
         <SelectViewport :class="styles.viewport()">
-          <OverlayScrollbars
-            element="div"
-            defer
-            :options="{ scrollbars: { autoHide: 'scroll', theme: 'os-theme-light' } }"
+          <ScrollArea
             class="max-h-172"
           >
             <SelectItem
@@ -58,7 +55,7 @@
                 Выбран
               </span>
             </SelectItem>
-          </OverlayScrollbars>
+          </ScrollArea>
         </SelectViewport>
       </SelectContent>
     </SelectRoot>
@@ -67,6 +64,7 @@
 
 <script setup>
 import IconArrow from '~/svg/arrow-down-24.svg';
+import ScrollArea from '~/components/atoms/ScrollArea.vue';
 
 const { options, placeholder } = defineProps({
   options: { type: Array, default: () => [] },
