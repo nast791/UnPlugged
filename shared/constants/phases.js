@@ -3,7 +3,7 @@ import PLAYER_ACTIONS from '#shared/constants/actions';
 export default [
   {
     id: 'GAME_SETUP',
-    description: () => 'Настройка параметров игры',
+    description: 'Настройка параметров игры',
     auto: false,
     onEnter: (store, { setupNewGame }) => {
       setupNewGame();
@@ -15,16 +15,20 @@ export default [
   {
     id: 'GAME_INIT',
     auto: false,
-    description: () => 'Подготовка колод и создание бойцов',
+    description: 'Подготовка колод и создание бойцов',
     onEnter: (store, { runInit }) => {
       runInit();
     },
-    transitions: [{ to: 'UNIT_PLACEMENT', condition: ctx => ctx.isGameInitialized }],
+    transitions: [{ to: 'UNIT_PLACEMENT', condition: ctx => ctx.activePlayerIndex }],
   },
   {
     id: 'UNIT_PLACEMENT',
-    description: ctx => `Игрок ${ctx.activePlayer.name}: расставьте своих бойцов на поле`,
-    transitions: [{ to: 'START_TURN', condition: ctx => ctx.isPlacementComplete }],
+    auto: true,
+    description: 'Расстановка бойцов',
+    onEnter: (store, { startPlacement }) => {
+      startPlacement();
+    },
+    transitions: [{ to: 'START_TURN', condition: ctx => ctx.isGameStarted && ctx.turn }],
   },
   {
     id: 'START_TURN',

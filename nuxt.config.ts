@@ -10,13 +10,7 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: [
-        'overlayscrollbars-vue',
-        '@vueuse/core',
-        '@tanstack/vue-query',
-        '@headlessui/vue',
-        'radix-vue/nuxt',
-      ],
+      include: ['@vueuse/core', '@tanstack/vue-query', 'radix-vue/nuxt'],
       esbuildOptions: {
         define: {
           global: 'window',
@@ -76,9 +70,8 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@peterbud/nuxt-query',
     '@pinia-plugin-persistedstate/nuxt',
-    'nuxt-headlessui',
-    '@headlessui-float/nuxt',
-    'radix-vue/nuxt'
+    'radix-vue/nuxt',
+    '@nuxt/icon',
   ],
   headlessui: {
     prefix: 'H',

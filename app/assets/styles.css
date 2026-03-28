@@ -1,8 +1,6 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/onest';
 
-@plugin "@headlessui/tailwindcss";
-
 @theme {
   --breakpoint-sm: 360px;
   --breakpoint-lg: 991px;
@@ -12,6 +10,7 @@
   --color-black: #000000;
   --color-black-90: #1a1a1a;
   --color-black-95: #1b1b1b;
+  --color-black-100: #1b1c21;
   --color-blue-120: #111318;
   --color-white: #ffffff;
   --color-primary: #141414;
@@ -25,6 +24,7 @@
   --color-gray-40: #b3acbd;
   --color-gray-50: #7a7f8d;
   --color-gray-70: #4a4a4a;
+  --color-gray-90: #282934;
   --font-display: 'Onest Variable', 'sans-serif';
   --default-transition-duration: 0.3s;
   --shadow-top: 0px 4px 8px 0px #1d1d1b29;
@@ -43,6 +43,64 @@
 
   [id] {
     @apply scroll-mt-40 md:scroll-mt-74 lg:scroll-mt-89;
+  }
+
+  .drv-handle {
+    border: none !important;
+    z-index: 50 !important;
+  }
+
+  /* Боковые стороны: лево и право */
+  .drv-handle-ml,
+  .drv-handle-mr {
+    width: 8px !important;
+    cursor: ew-resize !important;
+  }
+
+  .drv-handle-mr {
+    border-left: 1px solid white !important;
+  }
+
+  .drv-handle-ml {
+    border-right: 1px solid white !important;
+  }
+
+  /* Верх и низ */
+  .drv-handle-tm,
+  .drv-handle-bm {
+    height: 8px !important;
+    cursor: ns-resize !important;
+  }
+
+  .drv-handle-tm {
+    border-bottom: 1px solid white !important;
+  }
+
+  .drv-handle-bm {
+    border-top: 1px solid white !important;
+  }
+
+  /* Углы: делаем их больше, чтобы в них было легко попасть мышкой */
+  .drv-handle-tl,
+  .drv-handle-tr,
+  .drv-handle-bl,
+  .drv-handle-br {
+    width: 16px !important;
+    height: 16px !important;
+    z-index: 60 !important;
+  }
+
+  .drv-handle-br,
+  .drv-handle-tl {
+    cursor: nwse-resize !important;
+  }
+  .drv-handle-bl,
+  .drv-handle-tr {
+    cursor: nesw-resize !important;
+  }
+
+  .drv-handle:hover {
+    @apply bg-white/5; /* Легкая подсветка в стиле Tailwind 4 */
   }
 }
 

@@ -19,7 +19,20 @@
 </template>
 <script setup>
 import { useAppStore } from '~/store/app.js';
+import useSetup from '~/composables/game/useSetup';
+import useInitializer from '~/composables/game/useInitializer';
+import usePlacementManager from '~/composables/game/usePlacementManager';
+import { useGameStore } from '~/store/game';
 
 const route = useRoute();
 const { stopScrollingPage } = storeToRefs(useAppStore());
+
+const { setupNewGame } = useSetup();
+const { runInit } = useInitializer();
+const { startPlacement } = usePlacementManager();
+const { $registerActions } = useNuxtApp();
+
+onMounted(() => {
+  $registerActions({ setupNewGame, runInit, startPlacement });
+});
 </script>
