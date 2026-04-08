@@ -1,6 +1,7 @@
 <template>
   <div
     class="flex flex-col relative aspect-[5/7] w-full @container rounded-[0.5cqw] overflow-hidden shadow-2xl border-[0.05cqw] border-black bg-slate-900 group select-none"
+    :style="{ '--brand-color': settings.color }"
   >
     <div class="relative aspect-square overflow-hidden">
       <NuxtImg
@@ -12,7 +13,7 @@
       <div class="flex flex-col w-[16cqw] relative z-1 text-white">
         <div
           :class="[
-            `bg-${settings.color}`,
+            `bg-(--brand-color)`,
             'p-[2cqw] flex flex-col gap-[1.5cqw] items-center justify-center text-[8cqw] font-black border-[0.2cqw] border-white/20 h-[25cqw] leading-none',
           ]"
         >
@@ -40,7 +41,7 @@
       <div
         class="absolute -top-[6cqw] right-[4cqw] w-[12cqw] h-[12cqw] rounded-full text-[5.5cqw] font-bold text-white bg-slate-900 border-[0.5cqw] border-white flex items-center justify-center shadow-xl leading-none"
       >
-        {{ item.boost }}
+        {{ item.bonus }}
       </div>
 
       <h3 class="text-white font-black uppercase text-[5.3cqw] leading-tight tracking-tight">
@@ -70,6 +71,8 @@
   </div>
 </template>
 <script setup>
+import { useAppStore } from '~/store/app.js';
+
 const { item, player } = defineProps({
   item: {
     type: Object,
@@ -81,22 +84,11 @@ const { item, player } = defineProps({
   },
 });
 
-const settings = computed(() => {
-  switch (item.type) {
-    case 'strike':
-      return { color: 'red-600', icon: 'game-icons:crossed-swords' };
-    case 'guard':
-      return { color: 'blue-600', icon: 'bxs:shield' };
-    case 'hybrid':
-      return { color: 'purple-600', icon: 'game-icons:shield-reflect' };
-    case 'effect':
-      return { color: 'amber-400', icon: 'game-icons:magic-hat' };
-    default:
-      return { color: 'black', icon: 'game-icons:magic-swirl' };
-  }
-});
+const { glossary } = storeToRefs(useAppStore());
+
+const settings = computed(() => glossary?.value?.meta?.cards?.[item.type] || {});
 
 const fighterName = computed(
-  () => player?.fighters.find(i => item.character === i.id)?.name || 'все',
+  () => player?.fighters.find(i => item.fighter === i.id)?.name || 'все',
 );
 </script>

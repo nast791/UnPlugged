@@ -19,6 +19,10 @@
           <div
             class="flex gap-8 items-start text-16 leading-snug"
             :class="[index === history?.length - 1 ? 'text-white' : 'text-slate-400']"
+            v-if="
+              (item.type === 'action' && !item?.options?.some(i => i.clicked)) ||
+              item.type !== 'action'
+            "
           >
             <span>[{{ item.time }}]</span>
             <div>
@@ -26,12 +30,18 @@
             </div>
           </div>
 
-          <div v-if="item?.options?.length" class="mt-3 ml-5 flex flex-wrap gap-2">
+          <div
+            v-if="
+              item.type === 'action' &&
+              item?.options?.length &&
+              !item?.options?.some(i => i.clicked)
+            "
+            class="mt-3 flex flex-wrap gap-6"
+          >
             <template v-for="it in item.options" :key="it.text">
               <button
                 @click="it.action(it)"
-                class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-800 border border-slate-700 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 hover:border-cyan-400 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
-                v-if="!it?.clicked"
+                class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-500/30 border border-slate-700 text-cyan-500 hover:bg-fuchsia-400 hover:text-slate-950 hover:border-fuchsia-500 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
               >
                 {{ it.text }}
               </button>

@@ -28,18 +28,15 @@ export default [
     onEnter: (store, { startPlacement }) => {
       startPlacement();
     },
-    transitions: [{ to: 'START_TURN', condition: ctx => ctx.isGameStarted && ctx.turn }],
-  },
-  {
-    id: 'START_TURN',
-    description: ctx => `Начало хода игрока ${ctx.activePlayer?.name}`,
-    transitions: [
-      { to: 'ACTION_SELECTION', condition: ctx => ctx.isGameStarted && ctx.activePlayerIndex },
-    ],
+    transitions: [{ to: 'ACTION_SELECTION', condition: ctx => ctx.isGameStarted && ctx.turn }],
   },
   {
     id: 'ACTION_SELECTION',
-    description: () => 'Выберите действие: маневр, атака или схема',
+    auto: true,
+    description: 'Выберите действие',
+    onEnter: (store, { startSelection }) => {
+      startSelection();
+    },
     transitions: [{ to: 'ACTION_SELECTED', condition: ctx => !!ctx.selectedAction }],
   },
   {

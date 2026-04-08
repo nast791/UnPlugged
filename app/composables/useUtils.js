@@ -2,12 +2,6 @@ import { useAppStore } from '~/store/app.js';
 import { storeToRefs } from 'pinia';
 
 export default function () {
-  const { stopScrollingPage } = storeToRefs(useAppStore());
-
-  const toggleStopScrolling = stop => {
-    stopScrollingPage.value = stop;
-  };
-
   const cloneDeep = obj => {
     if (!obj) return {};
     const rawObject = toRaw(obj);
@@ -69,7 +63,6 @@ export default function () {
   };
 
   return {
-    toggleStopScrolling,
     cloneDeep,
     shuffle,
     getNodePosition,

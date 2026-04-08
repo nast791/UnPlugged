@@ -28,7 +28,7 @@
         <div
           v-for="i in +item.actionsPoints - +item.actionsUsed"
           :key="i"
-          class="flex items-center gap-6 size-12 rounded-full transition-all shadow-inner bg-amber-400 shadow-amber-500/50"
+          class="flex items-center gap-6 size-12 rounded-full transition-all shadow-inner bg-cyan-400 shadow-amber-500/50"
         />
         <div>/</div>
         <div>{{ item.actionsPoints }}</div>

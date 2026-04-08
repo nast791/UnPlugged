@@ -1,5 +1,5 @@
 <template>
-  <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y">
+  <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y" @click="handleInternalClick">
     <!-- Внешнее кольцо (подсветка хода) -->
     <v-circle
       :config="{
@@ -17,6 +17,7 @@
         x: -nodeSize / 3,
         y: -nodeSize / 3,
         cornerRadius: nodeSize / 2,
+        listening: true
       }"
     />
   </v-group>
@@ -24,19 +25,21 @@
 
 <script setup>
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
+import useActions from '~/composables/game/useActions';
 
-const { imageUrl, position, nodeSize } = defineProps({
+const { imageUrl, position, nodeSize, item } = defineProps({
   position: { type: Object },
   imageUrl: { type: String },
   nodeSize: { type: Number },
   scale: { type: Number },
   color: { type: String },
-  id: { type: [String, Number] },
+  item: { type: Object, required: true },
 });
 
 const { loadAsset } = useKonvaLoader();
 const heroImg = ref(null);
 const imageNode = ref(null);
+const emit = defineEmits(['click']); 
 
 const groupConfig = computed(() => ({
   x: position?.x || 0,
@@ -56,6 +59,14 @@ const initHero = async () => {
   } catch (e) {
     console.error('Ошибка в MapHero:', e);
   }
+};
+
+
+
+const {onFighterClick} = useActions();
+const handleInternalClick = (evt) => {
+  onFighterClick(item);
+  emit('click', evt);
 };
 
 onMounted(initHero);

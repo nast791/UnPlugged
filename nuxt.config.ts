@@ -84,9 +84,7 @@ export default defineNuxtConfig({
       defaultOptions: {
         queries: {
           networkMode: 'always',
-          retry: 1,
-          retryDelay: 1000,
-          staleTime: 60000 * 60 * 12,
+          staleTime: 60000 * 60 * 6,
           refetchOnWindowFocus: false,
         },
         mutations: {

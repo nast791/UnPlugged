@@ -70,7 +70,7 @@ export default function () {
         ...player,
         items,
         fighters,
-        hand: shuffledCards.splice(0, 5),
+        hand: shuffledCards.splice(-5),
         deck: shuffledCards,
         discard: [],
         activeCardBtns: [{ id: player.id, type: 'hand' }],

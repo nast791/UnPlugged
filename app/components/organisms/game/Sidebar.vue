@@ -37,20 +37,18 @@
             <IconCards class="size-18" />
             <div class="flex gap-8 flex-1">
               <Card
-                :count="player[item.id]?.length"
+                :count="player[key]?.length"
                 :active="
-                  (item.id === 'discard' && player[item.id]?.length > 0) ||
-                  (!!activePlayer.activeCardBtns.find(
-                    i => i.id === player.id && i.type === item.id,
-                  ) &&
-                    player[item.id]?.length > 0)
+                  (key === 'discard' && player[key]?.length > 0) ||
+                  (!!activePlayer.activeCardBtns.find(i => i.id === player.id && i.type === key) &&
+                    player[key]?.length > 0 && player[key]?.type !== 'ai')
                 "
-                @click="clickCardHandler(player.id, item)"
-                :style="isWindowActive(player.id, item.id) && { borderColor: player.color }"
-                v-for="item in cardsTypes"
-                :key="item.id"
+                @click="clickCardHandler(player.id, key, item)"
+                :style="isWindowActive(player.id, key) && { borderColor: player.color }"
+                v-for="(item, key) in decks"
+                :key="key"
               >
-                {{ item.name }}
+                {{ item }}
               </Card>
             </div>
           </div>
@@ -97,11 +95,15 @@ import Card from '~/components/molecules/sidebar/Card.vue';
 import Console from '~/components/molecules/sidebar/Console.vue';
 import { useGameStore } from '~/store/game.js';
 import Window from '~/components/atoms/Window.vue';
-import cardsTypes from '#shared/constants/cards';
+import { useAppStore } from '~/store/app.js';
 
 const { map, players, turn, activePlayerIndex, activePlayer } = storeToRefs(useGameStore());
 
 const emit = defineEmits(['showStats', 'openDiscard', 'zoomEffect']);
+
+const { glossary } = storeToRefs(useAppStore());
+
+const decks = computed(() => glossary?.value?.meta?.decks || {});
 
 const activeWindows = ref([]);
 
@@ -118,18 +120,18 @@ const getMaxZIndex = () => {
   return activeWindows.value.length > 0 ? Math.max(...activeWindows.value.map(i => i.zIndex)) : 100;
 };
 
-const clickCardHandler = (id, type) => {
-  const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === type.id);
+const clickCardHandler = (id, key, type) => {
+  const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === key);
 
   if (isAlreadyOpen) {
-    closeWindow(id, type.id);
+    closeWindow(id, key);
     return;
   }
 
   activeWindows.value.push({
     id: id,
-    type: type.id,
-    typeName: type.name,
+    type: key,
+    typeName: type,
     zIndex: getMaxZIndex() + 1,
   });
 };

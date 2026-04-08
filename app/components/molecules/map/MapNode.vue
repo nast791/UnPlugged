@@ -4,28 +4,54 @@
       :config="{
         radius: nodeSize / 2,
         fill: isHovered ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-        stroke: isDraggingOverCanvas && availableSpawnPoints[dragFighter.type]?.includes(node.id)
-      ? 'cyan'
-      : 'transparent',
+        stroke: getStrokeColor,
         strokeWidth: 5,
-        shadowBlur:
-          isDraggingOverCanvas && availableSpawnPoints[dragFighter.type]?.includes(node.id)
-            ? 10
-            : 0,
-        shadowColor: 'white'
+        shadowBlur: getStrokeColor !== 'transparent' ? 10 : 0,
+        shadowColor: 'white',
+        listening: true
       }"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
-      @click="$emit('select', node.id)"
+      @click="onNodeClick"
     />
   </v-group>
 </template>
 
 <script setup>
 import usePlacementManager from '~/composables/game/usePlacementManager';
+import useMovement from '~/composables/game/useMovement';
+import { useGameStore } from '@/store/game';
 
-defineProps(['node', 'nodeSize', 'scale', 'isDraggingOverCanvas', 'dragFighter']);
-defineEmits(['select']);
+const { isDraggingOverCanvas, node, dragFighter } = defineProps([
+  'node',
+  'nodeSize',
+  'scale',
+  'isDraggingOverCanvas',
+  'dragFighter',
+]);
+const emit = defineEmits(['select']);
+const { intent } = storeToRefs(useGameStore());
 const isHovered = ref(false);
 const { availableSpawnPoints } = usePlacementManager();
+const { availableCells } = useMovement();
+
+const getStrokeColor = computed(() => {
+  if (isDraggingOverCanvas && availableSpawnPoints[dragFighter?.type]?.includes(node.id)) {
+    return 'cyan';
+  }
+  if (intent.value?.selectedAction === 'movement' && availableCells.value.includes(node.id)) {
+    return '#facc15';
+  }
+  return 'transparent';
+});
+
+const onNodeClick = () => {
+  const color = getStrokeColor.value;
+
+  if (color === '#facc15') {
+    emit('select', node.id);
+  } else {
+    emit('select', node.id);
+  }
+};
 </script>

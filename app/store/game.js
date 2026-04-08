@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import PLAYER_ACTIONS from '#shared/constants/actions';
+import { useAppStore } from '~/store/app.js';
 
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -17,13 +17,17 @@ export const useGameStore = defineStore('game', {
       selectedCardId: null,
       selectedUnitId: null, 
       targets: [], 
+      movementBonus: 0,
+      canPassThroughEnemies: false
     },
     history: [],
   }),
   getters: {
     activePlayer: state => state.players?.find(i => i.index === state.activePlayerIndex),
-    selectedActionName: state =>
-      PLAYER_ACTIONS[state.intent.selectedAction]?.name || '',
+    selectedActionName: state => {
+      const { glossary } = storeToRefs(useAppStore());
+      return glossary.value?.meta?.actions?.find(i => i.id === state.intent.selectedAction)?.name || '';
+    }
   },
   // persist: [
   //   {

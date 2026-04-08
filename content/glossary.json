@@ -1,4 +1,8 @@
 {
+  "players": [
+    { "id": "player", "name": "Игрок" },
+    { "id": "ai", "name": "ИИ" }
+  ],
   "entities": {
     "fighter": "Боец",
     "hero": "Герой",
@@ -10,8 +14,8 @@
     "adjacent": "Соседние клетки"
   },
   "decks": {
-    "hand": "Рука",
     "deck": "Колода",
+    "hand": "Рука",
     "discard": "Сброс"
   },
   "phases": {
@@ -22,12 +26,33 @@
     "during": "Во время битвы",
     "after": "После битвы"
   },
-  "actions": {
-    "attack": "Атака",
-    "defense": "Защита",
-    "effect": "Эффект",
-    "hybrid": "Универсальная"
+  "cards": {
+    "attack": {
+      "name": "Атака",
+      "icon": "game-icons:crossed-swords",
+      "color": "#ef4444"
+    },
+    "defense": {
+      "name": "Защита",
+      "icon": "bxs:shield",
+      "color": "#2563eb"
+    },
+    "hybrid": {
+      "name": "Универсальная",
+      "icon": "game-icons:shield-reflect",
+      "color": "#9333ea"
+    },
+    "effect": {
+      "name": "Эффект",
+      "icon": "game-icons:burning-meteor",
+      "color": "#f59e0b"
+    }
   },
+  "actions": [
+    { "id": "movement", "name": "Движение", "desc": "Доберите карту и передвиньте своих бойцов.", "color": "#10b981", "handler": "handleMovement" },
+    { "id": "attack", "name": "Атака", "desc": "Выберите цель и совершите нападение.", "color": "#ef4444", "handler": "handleAttack" },
+    { "id": "effect", "name": "Эффект", "desc": "Разыграйте карту с немедленным действием.", "color": "#f59e0b", "handler": "handleEffect" }
+  ],
   "mechanics": {
     "bonus": "Бонусное значение",
     "health": "Здоровье",

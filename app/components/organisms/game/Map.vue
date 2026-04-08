@@ -30,7 +30,7 @@
                 :nodeSize="nodeSize"
                 :scale="currentScale"
                 :color="hero.color"
-                :id="item.id"
+                :item="item"
                 v-for="item in hero?.fighters"
                 :key="item.id"
               />
