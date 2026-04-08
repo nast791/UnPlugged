@@ -44,11 +44,36 @@ export default function () {
     return yiq;
   };
 
+  const sortByTypeAndValue = (deck) => {
+    const typeOrder = {
+      'strike': 1,
+      'hybrid': 2,
+      'guard': 3,
+      'effect': 4
+    };
+  
+    return [...deck].sort((a, b) => {
+      // ПРАВИЛО 1: Сортировка по типу
+      if (typeOrder[a.type] !== typeOrder[b.type]) {
+        return typeOrder[a.type] - typeOrder[b.type];
+      }
+  
+      // ПРАВИЛО 2: Внутри одного типа — по значению (Value)
+      if (a.value !== b.value) {
+        return (a.value || 0) - (b.value || 0);
+      }
+  
+      // ПРАВИЛО 3: Если тип и значение одинаковые (дубли), 
+      return a.title.localeCompare(b.title);
+    });
+  };
+
   return {
     toggleStopScrolling,
     cloneDeep,
     shuffle,
     getNodePosition,
     getContrastColor,
+    sortByTypeAndValue
   };
 }

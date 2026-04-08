@@ -39,8 +39,11 @@
               <Card
                 :count="player[item.id]?.length"
                 :active="
-                  item.id === 'discard' ||
-                  !!activePlayer.activeCardBtns.find(i => i.id === player.id && i.type === item.id)
+                  (item.id === 'discard' && player[item.id]?.length > 0) ||
+                  (!!activePlayer.activeCardBtns.find(
+                    i => i.id === player.id && i.type === item.id,
+                  ) &&
+                    player[item.id]?.length > 0)
                 "
                 @click="clickCardHandler(player.id, item)"
                 :style="isWindowActive(player.id, item.id) && { borderColor: player.color }"
@@ -66,7 +69,18 @@
       :title="`${players.find(p => p.id === i.id)?.name}: ${i.typeName}`"
       :color="players.find(p => p.id === i.id)?.color"
     >
-      <div class="py-16">{{ players.find(p => p.id === i.id)?.[i.type] || '' }}</div>
+      <div class="p-16 min-w-max">
+        <ContextMenu>
+          <div class="flex gap-8">
+            <PlayerCard
+              v-for="item in players.find(p => p.id === i.id)?.[i.type]"
+              :key="item.id"
+              :item="item"
+              :player="players.find(p => p.id === i.id)"
+            />
+          </div>
+        </ContextMenu>
+      </div>
     </Window>
   </aside>
 </template>
@@ -74,6 +88,8 @@
 import IconCards from '~/svg/cards.svg';
 import IconBag from '~/svg/box.svg';
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
+import ContextMenu from '~/components/atoms/ContextMenu.vue';
+import PlayerCard from '~/components/molecules/game/Card.vue';
 import Player from '~/components/molecules/sidebar/Player.vue';
 import Fighter from '~/components/molecules/sidebar/Fighter.vue';
 import Resources from '~/components/molecules/sidebar/Resources.vue';
@@ -106,7 +122,7 @@ const clickCardHandler = (id, type) => {
   const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === type.id);
 
   if (isAlreadyOpen) {
-    bringToFront(id, type.id);
+    closeWindow(id, type.id);
     return;
   }
 

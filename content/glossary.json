@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "fighter": "Боец",
+    "hero": "Герой",
+    "assistant": "Помощник"
+  },
+  "map": {
+    "cell": "Клетка",
+    "area": "Область",
+    "adjacent": "Соседние клетки"
+  },
+  "decks": {
+    "hand": "Рука",
+    "deck": "Колода",
+    "discard": "Сброс"
+  },
+  "phases": {
+    "start_game": "Начало игры",
+    "start_turn": "Начало хода",
+    "end_turn": "Конец хода",
+    "instant": "Мгновенно",
+    "during": "Во время битвы",
+    "after": "После битвы"
+  },
+  "actions": {
+    "attack": "Атака",
+    "defense": "Защита",
+    "effect": "Эффект",
+    "hybrid": "Универсальная"
+  },
+  "mechanics": {
+    "bonus": "Бонусное значение",
+    "health": "Здоровье",
+    "movement": "Передвижение",
+    "battle": "Битва",
+    "turn": "Ход",
+    "action": "Действие",
+    "effect": "Эффект",
+    "damage": "Урон",
+    "skill": "Умение",
+    "exhaustion": "Истощение",
+    "teleport": "Телепортация",
+    "opponent": "Оппонент",
+    "enemy": "Враг",
+    "activate": "Активировать",
+    "active": "Активный",
+    "deactivate": "Деактивировать"
+  },
+  "attackTypes": {
+    "melee": "Ближний бой",
+    "ranged": "Дальний бой",
+    "extended": "Увеличенный радиус атаки"
+  }
+}

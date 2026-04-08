@@ -72,6 +72,7 @@ export default defineNuxtConfig({
     '@pinia-plugin-persistedstate/nuxt',
     'radix-vue/nuxt',
     '@nuxt/icon',
+    '@nuxt/content',
   ],
   headlessui: {
     prefix: 'H',
