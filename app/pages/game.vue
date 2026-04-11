@@ -8,7 +8,7 @@
 import { useGameStore } from '~/store/game.js';
 import { getMap, getHeroes } from '~/composables/api/plugins';
 
-const { id, activePlayerIndex, processorAction } = storeToRefs(useGameStore());
+const { id, activePlayerIndex } = storeToRefs(useGameStore());
 const route = useRoute();
 
 if (String(route.params.id) !== String(id.value)) {
@@ -22,7 +22,4 @@ const { suspense: suspenseMap } = getMap();
 const { suspense: suspenseHeroes } = getHeroes();
 
 await Promise.all([suspenseMap(), suspenseHeroes()]);
-const { $gameProcess } = useNuxtApp();
-
-onMounted(() => $gameProcess());
 </script>

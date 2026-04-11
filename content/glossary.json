@@ -1,6 +1,6 @@
 {
   "players": [
-    { "id": "player", "name": "Игрок" },
+    { "id": "human", "name": "Игрок" },
     { "id": "ai", "name": "ИИ" }
   ],
   "entities": {
@@ -56,7 +56,6 @@
   "mechanics": {
     "bonus": "Бонусное значение",
     "health": "Здоровье",
-    "movement": "Передвижение",
     "battle": "Битва",
     "turn": "Ход",
     "action": "Действие",

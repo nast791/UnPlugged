@@ -18,20 +18,14 @@
 </template>
 <script setup>
 import { useAppStore } from '~/store/app.js';
-import useSetup from '~/composables/game/useSetup';
-import useInitializer from '~/composables/game/useInitializer';
-import usePlacementManager from '~/composables/game/usePlacementManager';
-import useActions from '~/composables/game/useActions';
 import { useGlossary } from '~/composables/api/glossary';
+import { useGamePhases } from '~/composables/phases';
 
 const route = useRoute();
 const { data } = useGlossary();
 const { glossary } = storeToRefs(useAppStore());
+const allActions = useGamePhases();
 
-const { setupNewGame } = useSetup();
-const { runInit } = useInitializer();
-const { startPlacement } = usePlacementManager();
-const { startSelection } = useActions();
 const { $registerActions } = useNuxtApp();
 
 watch(data, (newData) => {
@@ -41,6 +35,6 @@ watch(data, (newData) => {
 }, { immediate: true })
 
 onMounted(() => {
-  $registerActions({ setupNewGame, runInit, startPlacement, startSelection });
+  $registerActions(allActions);
 });
 </script>

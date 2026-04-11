@@ -18,9 +18,9 @@
           <template #header>
             <Switch
               class="w-full"
-              :modelValue="players[index]?.type"
-              :trueValue="{ id: 'player', name: 'Игрок' }"
-              :falseValue="{ id: 'ai', name: 'ИИ' }"
+              v-model="players[index].type"
+              :trueValue="human"
+              :falseValue="ai"
               @click.stop
               @pointerdown.stop
               v-if="players[index]?.type"
@@ -40,7 +40,7 @@
           </template>
         </Select>
 
-        <Controls 
+        <Controls
           :show-plus="players?.length === counter && players.length < MAX && hasHeroes"
           :show-minus="players.length > 0"
           @add="addRow"
@@ -48,7 +48,7 @@
           v-if="players?.length > 0"
         />
 
-        <ColorPicker v-model="players[index].color" v-if="players[index]?.color"/>
+        <ColorPicker v-model="players[index].color" v-if="players[index]?.color" />
       </div>
     </div>
   </div>
@@ -59,6 +59,7 @@ import ColorPicker from '~/components/atoms/ColorPicker.vue';
 import Switch from '~/components/atoms/Switch.vue';
 import Controls from '~/components/molecules/settings/Controls.vue';
 import { useGameStore } from '~/store/game.js';
+import { useAppStore } from '~/store/app';
 import useUtils from '~/composables/useUtils';
 import Select from '~/components/atoms/Select.vue';
 
@@ -68,6 +69,7 @@ const { heroes } = defineProps({
 
 const MAX = 4;
 
+const { glossary } = storeToRefs(useAppStore());
 const { players } = storeToRefs(useGameStore());
 const { cloneDeep } = useUtils();
 
@@ -80,12 +82,14 @@ const listHeroes = computed(
 );
 
 const hasHeroes = computed(() => listHeroes.value?.filter(i => !i.disabled).length > 0);
+const human = computed(() => glossary.value?.meta?.players?.[0]);
+const ai = computed(() => glossary.value?.meta?.players?.[1]);
 
 const addPlayer = (id, index) => {
   const item = heroes.find(i => i.id === id);
   const player = cloneDeep(item);
   delete player.disabled;
-  player.type = !players.value?.length ? 'player' : 'ai';
+  player.type = !players.value?.length || !players.value?.find(i => i.type === human.value?.id) ? human.value?.id : ai.value?.id;
   player.index = index + 1;
   if (players.value[index]) {
     players.value[index] = player;

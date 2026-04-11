@@ -30,5 +30,13 @@
 <script setup>
 import Modal from '~/components/atoms/Modal.vue';
 import GameSettings from '~/components/organisms/index/GameSettings.vue';
+import { useGameStore } from '~/store/game.js';
+
+const store = useGameStore();
 const isModalOpen = ref(false);
+
+const startNewGame = () => {
+  isModalOpen.value = true;
+  store.phase = 'GAME_SETUP';
+};
 </script>

@@ -13,7 +13,7 @@
       <Maps :maps="maps" />
     </div>
 
-    <Footer :players="players" :map="map" @start="$gameProcess()" />
+    <Footer :players="players" :map="map" @start="finishGameSetup()" />
   </section>
 </template>
 <script setup>
@@ -30,15 +30,11 @@ import Maps from '~/components/molecules/settings/Maps.vue';
 import Footer from '~/components/molecules/settings/Footer.vue';
 import { usePlugins } from '~/composables/api/plugins';
 import { useGameStore } from '~/store/game.js';
+import { useGameSetup } from '~/composables/phases/useGameSetup';
 
 const { players, phase, map } = storeToRefs(useGameStore());
+const { finishGameSetup } = useGameSetup();
 
-onMounted(() => {
-  useGameStore().$reset();
-  phase.value = 'GAME_SETUP';
-});
-
-const { $gameProcess } = useNuxtApp();
 const { suspense, heroes, maps } = usePlugins();
 
 await Promise.all([suspense()]);
