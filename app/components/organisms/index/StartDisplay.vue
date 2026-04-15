@@ -8,7 +8,7 @@
       </h1>
 
       <button
-        @click="isModalOpen = true"
+        @click="startNewGame"
         class="group relative inline-flex items-center gap-10 rounded-full bg-slate-900 border border-slate-800 px-20 py-10 text-30 font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer"
       >
         <div
@@ -30,13 +30,14 @@
 <script setup>
 import Modal from '~/components/atoms/Modal.vue';
 import GameSettings from '~/components/organisms/index/GameSettings.vue';
+import { useGameSetup } from '~/composables/phases/useGameSetup';
 import { useGameStore } from '~/store/game.js';
 
-const store = useGameStore();
 const isModalOpen = ref(false);
+const { runGameSetup } = useGameSetup();
 
 const startNewGame = () => {
   isModalOpen.value = true;
-  store.phase = 'GAME_SETUP';
+  runGameSetup();
 };
 </script>

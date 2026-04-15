@@ -1,5 +1,5 @@
 import { useGameStore } from '~/store/game.js';
-import useLogger from '~/composables/game/useLogger';
+import { useLogger } from '~/composables/game/useLogger';
 
 export default function () {
   const { map, activePlayer, intent, players } = storeToRefs(useGameStore());

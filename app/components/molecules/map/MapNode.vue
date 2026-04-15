@@ -18,9 +18,9 @@
 </template>
 
 <script setup>
-import usePlacementManager from '~/composables/game/usePlacementManager';
 import useMovement from '~/composables/game/useMovement';
 import { useGameStore } from '@/store/game';
+import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
 
 const { isDraggingOverCanvas, node, dragFighter } = defineProps([
   'node',
@@ -32,7 +32,7 @@ const { isDraggingOverCanvas, node, dragFighter } = defineProps([
 const emit = defineEmits(['select']);
 const { intent } = storeToRefs(useGameStore());
 const isHovered = ref(false);
-const { availableSpawnPoints } = usePlacementManager();
+const { availableSpawnPoints } = useUnitPlacement();
 const { availableCells } = useMovement();
 
 const getStrokeColor = computed(() => {

@@ -1,4 +1,4 @@
-import useLogger from '~/composables/game/useLogger';
+import { useLogger } from '~/composables/game/useLogger';
 import { useGameStore } from '@/store/game';
 import { useAppStore } from '@/store/app.js';
 

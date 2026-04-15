@@ -8,17 +8,17 @@ export const useGameInit = () => {
   const { shuffle } = useUtils();
   const nuxtConfig = useRuntimeConfig();
   const appStore = useAppStore();
-  const human = computed(() => appStore.glossary?.meta?.players?.[0]);
+  const human = appStore.glossary?.meta?.players?.[0];
 
   const runGameInit = async () => {
     const { suspense: suspenseMap } = getMap();
     const { suspense: suspenseHeroes } = getHeroes();
-    
+
     await Promise.all([suspenseMap(), suspenseHeroes()]);
     const newGameId = crypto.randomUUID();
     store.id = newGameId;
 
-    store.players = store.players.map((player) => {
+    store.players = store.players.map(player => {
       const fullDeck = [];
       player.cards.forEach(card => {
         const qty = card.quantity || 1;
@@ -28,14 +28,15 @@ export const useGameInit = () => {
       });
       const shuffledCards = shuffle(fullDeck);
 
-      const fighters = player.heroes?.map(i => ({
-        ...i,
-        type: 'hero',
-        image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
-        currentHp: i.hp,
-        position: null,
-        active: false,
-      })) || [];
+      const fighters =
+        player.heroes?.map(i => ({
+          ...i,
+          type: 'hero',
+          image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
+          currentHp: i.hp,
+          position: null,
+          active: false,
+        })) || [];
 
       player.assistants?.forEach(i => {
         for (let item = 0; item < (i.count || 1); item++) {
@@ -67,21 +68,24 @@ export const useGameInit = () => {
         }
       });
 
-      const isHuman = player.type === human.value?.id;
+      const isHuman = player.type === appStore.glossary?.meta?.players?.[0]?.id;
+
       return {
         ...player,
         items,
         fighters,
-        hand: shuffledCards.splice(-5), 
+        hand: shuffledCards.splice(-5),
         deck: shuffledCards,
         discard: [],
         visibility: {
           deck: false,
           hand: isHuman,
-          discard: false
+          discard: false,
         },
         actionsPoints: 2,
         actionsUsed: 0,
+        canPassThroughEnemies: false,
+        movementBonus: 0,
       };
     });
 
@@ -118,9 +122,9 @@ export const useGameInit = () => {
       reachableCircles: [],
     };
 
-    store.activePlayerIndex = 1; 
+    store.activePlayerIndex = 1;
 
-    store.phase = 'UNIT_PLACEMENT';
+    store.goToPhase('UNIT_PLACEMENT');
     await navigateTo(`/game/${newGameId}`);
   };
 

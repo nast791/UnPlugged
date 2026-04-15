@@ -1,16 +1,16 @@
 import { useGameStore } from '~/store/game.js';
 import { useLogger } from '~/composables/game/useLogger';
 
-export default function () {
-  const { activePlayer, players, map, activePlayerIndex, isGameStarted, turn, timer, phase } =
-    storeToRefs(useGameStore());
-  const { addLog } = useLogger();
+export const useUnitPlacement = () => {
+  const store = useGameStore();
+  const { activePlayer, activePlayerIndex, players, isActivePlayerHuman, map } = storeToRefs(store);
+  const { addActions, addLog } = useLogger();
 
-  const startPlacement = () => {
-    if (activePlayer.value.type !== 'ai') {
-      addLog(`Игрок ${activePlayer.value.index}: расставьте своих бойцов на поле`, 'info');
+  const runUnitPlacement = () => {
+    if (isActivePlayerHuman.value) {
+      addLog(`Игрок ${activePlayer.value.name}: расставьте бойцов`, 'info');
     } else {
-      addLog(`Игрок ${activePlayer.value.index} расставляет силы...`, 'info');
+      addLog(`Игрок ${activePlayer.value.name} расставляет силы...`, 'info');
       autoPlaceAI();
     }
   };
@@ -67,65 +67,34 @@ export default function () {
       }
     });
 
-    finishPlacement();
+    finishUnitPlacement();
   };
 
   const checkPlacementStatus = () => {
-    const currentPlayerDone = activePlayer.value.fighters.every(f => f.position !== null);
+    const isDone = activePlayer.value.fighters.every(f => f.position !== null);
+    if (!isDone) return;
 
-    if (currentPlayerDone) {
-      addLog(
-        `Все бойцы игрока ${activePlayer.value.index} расставлены. Подтвердите готовность`,
-        'action',
-        activePlayer.value.type !== 'ai'
-          ? [{ text: 'Завершить расстановку', action: finishPlacement }]
-          : null,
-        activePlayer.value.type !== 'ai' ? `${phase.value}-${activePlayer.value.id}-ready` : null
+    if (isActivePlayerHuman.value) {
+      addActions(
+        'placement-finish',
+        `Бойцы игрока ${activePlayer.value.name} расставлены. Подтвердите готовность`,
+        [{ text: 'Завершить расстановку', action: finishUnitPlacement }],
       );
+    } else {
+      finishUnitPlacement();
     }
   };
 
-  const finishPlacement = itemLog => {
-    if (itemLog) itemLog.clicked = true;
-    addLog(`Игрок ${activePlayer.value.index} завершил расстановку`, 'system');
+  const finishUnitPlacement = () => {
+    addLog(`Игрок ${activePlayer.value.name} завершил расстановку`, 'info');
+
     if (activePlayerIndex.value < players.value.length) {
       activePlayerIndex.value++;
-      startPlacement();
+      runUnitPlacement();
     } else {
-      activePlayerIndex.value = 1;
-      isGameStarted.value = true;
-      turn.value = 1;
-      addLog('Все бойцы на позициях. Битва начинается!', 'system');
-      startTimer();
+      store.goToPhase('GAME_START');
     }
   };
 
-  const timerInterval = ref(null);
-
-  const startTimer = () => {
-    stopTimer();
-
-    timerInterval.value = setInterval(() => {
-      timer.value++;
-    }, 1000);
-  };
-
-  const stopTimer = () => {
-    if (timerInterval.value) {
-      clearInterval(timerInterval.value);
-      timerInterval.value = null;
-    }
-  };
-
-  onUnmounted(stopTimer);
-
-  const formattedTime = computed(() => {
-    const hours = Math.floor(timer.value / 3600);
-    const minutes = Math.floor((timer.value % 3600) / 60);
-    const seconds = timer.value % 60;
-
-    return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
-  });
-
-  return { placeUnit, availableSpawnPoints, startPlacement, formattedTime };
-}
+  return { availableSpawnPoints, placeUnit, runUnitPlacement };
+};

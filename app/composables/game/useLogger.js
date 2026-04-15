@@ -1,11 +1,12 @@
-import LOG_TYPES from '#shared/constants/logs';
 import { useGameStore } from '~/store/game.js';
+import { useAppStore } from '~/store/app';
 
-export default function () {
+export const useLogger = () => {
   const { history, activePlayer, turn, phase } = storeToRefs(useGameStore());
+  const appStore = useAppStore();
+  const logs = appStore.glossary?.meta?.logTypes || [];
   
-
-  const addLog = (message, type = LOG_TYPES.SYSTEM.id, options = null, tag = null) => {
+  const addLog = (message, type = logs?.[0]?.id, options = null, tag = null) => {
     if (tag) {
       const existingIndex = history.value.findIndex(log => log.tag === tag);
       
@@ -27,7 +28,17 @@ export default function () {
     });
   }
 
+  const addActions = (id, message, actions = []) => {
+    addLog(
+      message,
+      'action',
+      actions.map(i => ({...i, clicked: false})),
+      `${activePlayer.value?.id}_${phase.value}_${turn.value}_${id}`
+    )
+  };
+
   return {
-    addLog
+    addLog,
+    addActions
   }
 };

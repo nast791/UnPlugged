@@ -40,7 +40,7 @@
           >
             <template v-for="it in item.options" :key="it.text">
               <button
-                @click="it.action(it)"
+                @click="clickHandler(it)"
                 class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-500/30 border border-slate-700 text-cyan-500 hover:bg-fuchsia-400 hover:text-slate-950 hover:border-fuchsia-500 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
               >
                 {{ it.text }}
@@ -60,6 +60,11 @@ import usePlacementManager from '~/composables/game/usePlacementManager';
 const { history, turn } = storeToRefs(useGameStore());
 const { formattedTime } = usePlacementManager();
 const scrollAreaRef = ref(null);
+
+const clickHandler = (it) => {
+  it.clicked = true;
+  it.action();
+};
 
 watch(
   () => history.value.length,

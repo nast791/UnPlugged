@@ -49,7 +49,7 @@ import MapHero from '~/components/molecules/map/MapHero.vue';
 import MapBackground from '~/components/molecules/map/MapBackground.vue';
 import { useGameStore } from '~/store/game.js';
 import useKonvaCamera from '~/composables/konva/useKonvaCamera';
-import usePlacementManager from '~/composables/game/usePlacementManager';
+import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -64,7 +64,7 @@ const observer = ref(null);
 const { map, players, activePlayer } = storeToRefs(useGameStore());
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
 const { getNodePosition } = useUtils();
-const { placeUnit } = usePlacementManager();
+const { placeUnit } = useUnitPlacement();
 
 const connections = computed(() => map.value?.connections || []);
 const nodes = computed(() => map.value?.circles || []);

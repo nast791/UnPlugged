@@ -1,5 +1,5 @@
 import jexl from 'jexl';
-import useLogger from '~/composables/game/useLogger';
+import { useLogger } from '~/composables/game/useLogger';
 import useDeck from '~/composables/game/useDeck';
 import { useGameStore } from '@/store/game';
 import { useAppStore } from '@/store/app.js';

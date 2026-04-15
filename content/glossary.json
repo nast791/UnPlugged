@@ -13,11 +13,11 @@
     "area": "Область",
     "adjacent": "Соседние клетки"
   },
-  "decks": {
-    "deck": "Колода",
-    "hand": "Рука",
-    "discard": "Сброс"
-  },
+  "decks": [
+    {"id": "deck", "name": "Колода"},
+    {"id": "hand", "name": "Рука"},
+    {"id": "discard", "name": "Сброс"}
+  ],
   "phases": {
     "start_game": "Начало игры",
     "start_turn": "Начало хода",
@@ -74,5 +74,11 @@
     "melee": "Ближний бой",
     "ranged": "Дальний бой",
     "extended": "Увеличенный радиус атаки"
-  }
+  },
+  "logTypes": [
+    { "id": "info", "color": "" },
+    { "id": "action", "color": "" },
+    { "id": "battle", "color": "" },
+    { "id": "error", "color": "" }
+  ]
 }

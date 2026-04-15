@@ -37,18 +37,14 @@
             <IconCards class="size-18" />
             <div class="flex gap-8 flex-1">
               <Card
-                :count="player[key]?.length"
-                :active="
-                  (key === 'discard' && player[key]?.length > 0) ||
-                  (!!activePlayer.activeCardBtns.find(i => i.id === player.id && i.type === key) &&
-                    player[key]?.length > 0 && player[key]?.type !== 'ai')
-                "
-                @click="clickCardHandler(player.id, key, item)"
-                :style="isWindowActive(player.id, key) && { borderColor: player.color }"
-                v-for="(item, key) in decks"
-                :key="key"
+                :count="player[item.id]?.length"
+                :active="player.visibility?.[item.id]"
+                @click="clickCardHandler(player.id, item)"
+                :style="isWindowActive(player.id, item.id) && { borderColor: player.color }"
+                v-for="item in decks"
+                :key="item.id"
               >
-                {{ item }}
+                {{ item.name }}
               </Card>
             </div>
           </div>
@@ -120,18 +116,18 @@ const getMaxZIndex = () => {
   return activeWindows.value.length > 0 ? Math.max(...activeWindows.value.map(i => i.zIndex)) : 100;
 };
 
-const clickCardHandler = (id, key, type) => {
-  const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === key);
+const clickCardHandler = (id, item) => {
+  const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === item.id);
 
   if (isAlreadyOpen) {
-    closeWindow(id, key);
+    closeWindow(id, item.id);
     return;
   }
 
   activeWindows.value.push({
     id: id,
-    type: key,
-    typeName: type,
+    type: item.id,
+    typeName: item.name,
     zIndex: getMaxZIndex() + 1,
   });
 };

@@ -1,20 +1,21 @@
 export default [
   {
     id: 'GAME_SETUP',
+    start: true,
     description: 'Настройка параметров игры',
     onEnter: ({ runGameSetup }) => runGameSetup(),
     next: ['GAME_INIT'],
   },
   {
     id: 'GAME_INIT',
-    description: 'Подготовка колод и создание бойцов',
+    description: 'Подготовка колод, настройка карты, создание бойцов',
     onEnter: ({ runGameInit }) => runGameInit(),
     next: [ 'UNIT_PLACEMENT'],
   },
   {
     id: 'UNIT_PLACEMENT',
     description: 'Расстановка бойцов',
-    // onEnter: ({ startPlacement }) => startPlacement(),
+    onEnter: ({ runUnitPlacement }) => runUnitPlacement(),
     next: ['GAME_START'],
   },
   {
