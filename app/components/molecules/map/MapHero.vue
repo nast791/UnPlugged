@@ -1,11 +1,11 @@
 <template>
-  <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y" @click="handleInternalClick">
+  <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y">
     <!-- Внешнее кольцо (подсветка хода) -->
     <v-circle
       :config="{
         radius: nodeSize / 3 + 1,
         stroke: color,
-        strokeWidth: 3 / scale,
+        strokeWidth: 3 / (scale || 1),
       }"
     />
     <!-- Аватар -->
@@ -17,7 +17,7 @@
         x: -nodeSize / 3,
         y: -nodeSize / 3,
         cornerRadius: nodeSize / 2,
-        listening: true
+        listening: true,
       }"
     />
   </v-group>
@@ -27,11 +27,15 @@
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
 import useActions from '~/composables/game/useActions';
 
+defineOptions({
+  inheritAttrs: false,
+});
+
 const { imageUrl, position, nodeSize, item } = defineProps({
   position: { type: Object },
   imageUrl: { type: String },
   nodeSize: { type: Number },
-  scale: { type: Number },
+  scale: { type: Number, default: 1 },
   color: { type: String },
   item: { type: Object, required: true },
 });
@@ -39,13 +43,16 @@ const { imageUrl, position, nodeSize, item } = defineProps({
 const { loadAsset } = useKonvaLoader();
 const heroImg = ref(null);
 const imageNode = ref(null);
-const emit = defineEmits(['click']); 
+const emit = defineEmits(['click']);
 
 const groupConfig = computed(() => ({
   x: position?.x || 0,
   y: position?.y || 0,
   width: nodeSize,
   height: nodeSize,
+  listening: true,
+  onClick: handleInternalClick,
+  onTap: handleInternalClick,
 }));
 
 const initHero = async () => {
@@ -61,10 +68,9 @@ const initHero = async () => {
   }
 };
 
-
-
-const {onFighterClick} = useActions();
-const handleInternalClick = (evt) => {
+const { onFighterClick } = useActions();
+const handleInternalClick = evt => {
+  if (evt && evt.cancelBubble !== undefined) evt.cancelBubble = true;
   onFighterClick(item);
   emit('click', evt);
 };

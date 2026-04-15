@@ -1,7 +1,7 @@
 <template>
-  <section ref="mapContainer" class="relative overflow-hidden min-h-0 min-w-0">
+  <section ref="mapContainer" class="relative overflow-hidden min-h-0 min-w-0 z-1">
     <ClientOnly>
-      <div @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDropOnCanvas" v-if="map">
+      <div v-if="map">
         <v-stage ref="stageRef" :config="stageConfig" @wheel="handleWheel">
           <v-layer>
             <!-- 1. ФОН -->
@@ -16,9 +16,6 @@
               :key="node.id"
               :node="node"
               :nodeSize="nodeSize"
-              :scale="currentScale"
-              :isDraggingOverCanvas="isDraggingOverCanvas"
-              :dragFighter="dragFighter"
               @select="handleNodeClick"
             />
 
@@ -38,6 +35,20 @@
           </v-layer>
         </v-stage>
       </div>
+
+      <Teleport to="body">
+        <div
+          v-if="dragItem"
+          class="pointer-events-none fixed z-999 opacity-70"
+          :style="{
+            left: mousePos.x + 'px',
+            top: mousePos.y + 'px',
+            transform: 'translate(-50%, -50%)',
+          }"
+        >
+          <img :src="dragItem.image" class="w-64 h-64 border-2 border-white rounded-full" />
+        </div>
+      </Teleport>
     </ClientOnly>
   </section>
 </template>
@@ -49,7 +60,8 @@ import MapHero from '~/components/molecules/map/MapHero.vue';
 import MapBackground from '~/components/molecules/map/MapBackground.vue';
 import { useGameStore } from '~/store/game.js';
 import useKonvaCamera from '~/composables/konva/useKonvaCamera';
-import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
+import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -64,11 +76,11 @@ const observer = ref(null);
 const { map, players, activePlayer } = storeToRefs(useGameStore());
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
 const { getNodePosition } = useUtils();
-const { placeUnit } = useUnitPlacement();
 
 const connections = computed(() => map.value?.connections || []);
 const nodes = computed(() => map.value?.circles || []);
 const nodeSize = computed(() => map.value?.settings?.nodeSize);
+const { dragItem, mousePos } = useGlobalDrag();
 
 const currentMapImg = ref(null);
 
@@ -110,33 +122,9 @@ const handleWheel = e => {
   zoomToPoint(e);
 };
 
-const dragFighter = computed(() => activePlayer.value?.fighters?.find(i => i.drag));
+const { registerMap } = useKonvaPlacement();
 
-const isDraggingOverCanvas = ref(false);
-
-const onDragOver = e => {
-  e.preventDefault();
-  isDraggingOverCanvas.value = true;
-};
-
-const onDragLeave = () => {
-  isDraggingOverCanvas.value = false;
-};
-
-const onDropOnCanvas = e => {
-  isDraggingOverCanvas.value = false;
-  const fighterId = e.dataTransfer.getData('fighterId');
-  const stage = stageRef.value.getStage();
-  stage.setPointersPositions(e);
-  const transform = stage.getAbsoluteTransform().copy().invert();
-  const pointerPos = transform.point(stage.getPointerPosition());
-  const closestNode = map.value.circles.find(i => {
-    const dist = Math.sqrt(Math.pow(i.x - pointerPos.x, 2) + Math.pow(i.y - pointerPos.y, 2));
-    return dist < 100;
-  });
-
-  if (closestNode) {
-    placeUnit(fighterId, closestNode.id);
-  }
-};
+onMounted(() => {
+  registerMap(stageRef, nodes, nodeSize);
+});
 </script>

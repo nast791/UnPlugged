@@ -1,57 +1,87 @@
 <template>
-  <v-group :config="{ x: node.x, y: node.y }">
-    <v-circle
-      :config="{
-        radius: nodeSize / 2,
-        fill: isHovered ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-        stroke: getStrokeColor,
-        strokeWidth: 5,
-        shadowBlur: getStrokeColor !== 'transparent' ? 10 : 0,
-        shadowColor: 'white',
-        listening: true
-      }"
-      @mouseenter="isHovered = true"
-      @mouseleave="isHovered = false"
-      @click="onNodeClick"
-    />
+  <v-group :config="groupConfig">
+    <v-circle :config="hoverConfig" v-if="isHovered" />
+    <v-circle :config="mainCircleConfig" />
+    <v-circle v-if="activeStatus" :config="highlightConfig" />
   </v-group>
 </template>
 
 <script setup>
-import useMovement from '~/composables/game/useMovement';
-import { useGameStore } from '@/store/game';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
+import { useAppStore } from '~/store/app.js';
 
-const { isDraggingOverCanvas, node, dragFighter } = defineProps([
-  'node',
-  'nodeSize',
-  'scale',
-  'isDraggingOverCanvas',
-  'dragFighter',
-]);
-const emit = defineEmits(['select']);
-const { intent } = storeToRefs(useGameStore());
-const isHovered = ref(false);
-const { availableSpawnPoints } = useUnitPlacement();
-const { availableCells } = useMovement();
-
-const getStrokeColor = computed(() => {
-  if (isDraggingOverCanvas && availableSpawnPoints[dragFighter?.type]?.includes(node.id)) {
-    return 'cyan';
-  }
-  if (intent.value?.selectedAction === 'movement' && availableCells.value.includes(node.id)) {
-    return '#facc15';
-  }
-  return 'transparent';
+defineOptions({
+  inheritAttrs: false,
 });
 
-const onNodeClick = () => {
-  const color = getStrokeColor.value;
+const props = defineProps({
+  node: { type: Object, required: true },
+  nodeSize: { type: Number, default: 40 },
+});
 
-  if (color === '#facc15') {
-    emit('select', node.id);
-  } else {
-    emit('select', node.id);
+const emit = defineEmits(['select']);
+const appStore = useAppStore();
+
+const isHovered = ref(false);
+const { dragItem } = useGlobalDrag();
+const { availableSpawnPoints } = useUnitPlacement();
+
+const highlightings = appStore.glossary?.meta?.highlighting;
+
+const activeStatus = computed(() => {
+  if (dragItem.value) {
+    const type = dragItem.value.type;
+    const isSpawn = availableSpawnPoints.value[type]?.map(String).includes(String(props.node.id));
+    return isSpawn ? highlightings?.[0] : null;
   }
+  return null;
+});
+
+const groupConfig = computed(() => ({
+  x: props.node.x,
+  y: props.node.y,
+  listening: true,
+  onClick: e => handlePointerClick(e),
+  onTap: e => handlePointerClick(e),
+  onMouseEnter: e => {
+    isHovered.value = true;
+    const stage = e.target.getStage();
+    stage.container().style.cursor = 'pointer';
+  },
+  onMouseLeave: e => {
+    isHovered.value = false;
+    const stage = e.target.getStage();
+    stage.container().style.cursor = 'default';
+  },
+}));
+
+const mainCircleConfig = computed(() => ({
+  x: 0,
+  y: 0,
+  radius: props.nodeSize / 2,
+}));
+
+const hoverConfig = computed(() => ({
+  radius: props.nodeSize / 2 + 4,
+  fill: 'white',
+  opacity: 0.2,
+}));
+
+const highlightConfig = computed(() => ({
+  x: 0,
+  y: 0,
+  radius: props.nodeSize / 2 + 5,
+  stroke: activeStatus.value.color,
+  strokeWidth: 4,
+  opacity: 0.9,
+  shadowColor: activeStatus.value.color,
+  shadowBlur: 10,
+  listening: false,
+}));
+
+const handlePointerClick = e => {
+  if (e.cancelBubble !== undefined) e.cancelBubble = true;
+  emit('select', e, props.node.id);
 };
 </script>

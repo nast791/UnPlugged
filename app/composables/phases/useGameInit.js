@@ -82,7 +82,7 @@ export const useGameInit = () => {
           hand: isHuman,
           discard: false,
         },
-        actionsPoints: 2,
+        actionsPoints: 0,
         actionsUsed: 0,
         canPassThroughEnemies: false,
         movementBonus: 0,

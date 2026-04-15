@@ -55,10 +55,10 @@
 <script setup>
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
 import { useGameStore } from '~/store/game.js';
-import usePlacementManager from '~/composables/game/usePlacementManager';
+import {useTurnStart} from '~/composables/phases/useTurnStart';
 
 const { history, turn } = storeToRefs(useGameStore());
-const { formattedTime } = usePlacementManager();
+const { formattedTime } = useTurnStart();
 const scrollAreaRef = ref(null);
 
 const clickHandler = (it) => {

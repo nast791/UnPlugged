@@ -24,7 +24,7 @@
 
     <div class="flex items-center gap-12">
       <!-- Действия -->
-      <div v-if="isTurn && isGameStarted" class="flex items-center gap-4 text-slate-500 text-14">
+      <div v-if="isTurn && item.actionsPoints" class="flex items-center gap-4 text-slate-500 text-14">
         <div
           v-for="i in +item.actionsPoints - +item.actionsUsed"
           :key="i"

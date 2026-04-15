@@ -1,10 +1,12 @@
 import { useGameStore } from '~/store/game.js';
 import { useLogger } from '~/composables/game/useLogger';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 
 export const useUnitPlacement = () => {
   const store = useGameStore();
   const { activePlayer, activePlayerIndex, players, isActivePlayerHuman, map } = storeToRefs(store);
   const { addActions, addLog } = useLogger();
+  const { dragItem } = useGlobalDrag();
 
   const runUnitPlacement = () => {
     if (isActivePlayerHuman.value) {
@@ -15,16 +17,22 @@ export const useUnitPlacement = () => {
     }
   };
 
-  const availableSpawnPoints = computed(() => {
+  const getAvailablePoints = (fighter = null) => {
+    const targetUnit = fighter || dragItem.value;
+    if (!targetUnit) return { hero: [], assistant: [] };
+
     const heroStartNode = map.value?.nodes?.find(i => i.position === activePlayer.value.index);
-    if (!heroStartNode) return { hero: null, assistants: [] };
+    if (!heroStartNode) return { hero: [], assistant: [] };
+
     const zoneColors = heroStartNode.zones || [];
 
     const assistantsNodes = map.value?.nodes
       ?.filter(i => {
         const hasZone = i.zones.some(color => zoneColors.includes(color));
         const isNotHeroNode = i.id !== heroStartNode.id;
-        const isOccupied = players.value.some(p => p.fighters.some(f => f.position === i.id));
+        const isOccupied = players.value.some(p =>
+          p.fighters.some(f => f.position === i.id && f.id !== targetUnit.id),
+        );
 
         return hasZone && isNotHeroNode && !isOccupied;
       })
@@ -34,13 +42,18 @@ export const useUnitPlacement = () => {
       hero: [heroStartNode.id],
       assistant: assistantsNodes,
     };
-  });
+  };
+
+  const availableSpawnPoints = computed(() => getAvailablePoints());
 
   const placeUnit = (unitId, circleId) => {
     const unit = activePlayer.value.fighters.find(i => i.id === unitId);
+    if (!unit) return;
+
+    const points = getAvailablePoints(unit);
     const isOccupied = players.value.some(p => p.fighters.some(f => f.position === circleId));
 
-    if (unit && !isOccupied && availableSpawnPoints.value?.[unit.type]?.includes(circleId)) {
+    if (!isOccupied && points[unit.type]?.includes(circleId)) {
       unit.position = circleId;
       addLog(`${unit.name} выставлен на позицию ${circleId}`, 'info');
       checkPlacementStatus();
@@ -51,23 +64,23 @@ export const useUnitPlacement = () => {
     const fighters = activePlayer.value.fighters;
 
     const hero = fighters.find(f => f.type === 'hero');
-    if (hero && availableSpawnPoints.value.hero.length > 0) {
-      const startPoint = availableSpawnPoints.value.hero[0];
+    const heroPoints = getAvailablePoints(hero).hero;
+
+    if (hero && heroPoints.length > 0) {
+      const startPoint = heroPoints[0];
       placeUnit(hero.id, startPoint);
     }
 
     const assistants = fighters.filter(f => f.type === 'assistant');
 
     assistants.forEach(assistant => {
-      const possiblePoints = availableSpawnPoints.value.assistant;
+      const assistantPoints = getAvailablePoints(assistant).assistant;
 
-      if (possiblePoints.length > 0) {
-        const randomPoint = possiblePoints[Math.floor(Math.random() * possiblePoints.length)];
+      if (assistantPoints.length > 0) {
+        const randomPoint = assistantPoints[Math.floor(Math.random() * assistantPoints.length)];
         placeUnit(assistant.id, randomPoint);
       }
     });
-
-    finishUnitPlacement();
   };
 
   const checkPlacementStatus = () => {

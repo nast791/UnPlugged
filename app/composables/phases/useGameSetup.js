@@ -8,12 +8,13 @@ export const useGameSetup = () => {
   const runGameSetup = () => {
     store.$reset();
     store.goToPhase('GAME_SETUP');
-    console.log(store.phase);
   };
 
   const finishGameSetup = () => {
     const isValid =
-      store.players.length >= 2 && store.players.some(i => i.type === appStore.glossary?.meta?.players?.[0]?.id) && store.map?.id;
+      store.players.length >= 2 &&
+      store.players.some(i => i.type === appStore.glossary?.meta?.players?.[0]?.id) &&
+      store.map?.id;
     if (isValid) {
       store.goToPhase('GAME_INIT');
     }

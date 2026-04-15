@@ -15,27 +15,28 @@ export default [
   {
     id: 'UNIT_PLACEMENT',
     description: 'Расстановка бойцов',
+    allowFighterDrag: true,
     onEnter: ({ runUnitPlacement }) => runUnitPlacement(),
     next: ['GAME_START'],
   },
   {
     id: 'GAME_START',
     description: 'Начало игры',
-    // onEnter: ({ startPlacement }) => {},
+    onEnter: ({ runGameStart }) => runGameStart(),
     next: ['TURN_START'],
   },
   {
-    id: 'TURN_START', // счетчик хода, эффекты карт в начале хода
+    id: 'TURN_START',
     description: 'Начало хода',
-    onEnter: ({ startPlacement }) => {},
+    onEnter: ({ runTurnStart }) => runTurnStart(),
     next: ['ACTION_SELECTION'],
   },
   {
     id: 'ACTION_SELECTION',
     description: 'Выбор действия',
-    onEnter: ({ startSelection }) => {
-      startSelection();
-    },
+    // onEnter: ({ startSelection }) => {
+    //   startSelection();
+    // },
     transitions: [
       {
         to: 'DRAW_CARD',

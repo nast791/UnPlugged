@@ -15,13 +15,12 @@
         <NuxtImg
           loading="lazy"
           :src="item.image"
-          class="w-45 h-45 rounded-full border-2 object-cover shadow-xl"
-          :class="[isDraggable && 'cursor-grab']"
+          class="w-45 h-45 rounded-full border-2 object-cover shadow-xl select-none"
+          :class="[isDraggable && 'cursor-grab active:cursor-grabbing']"
           :style="{ borderColor: player.color }"
           alt=""
-          :draggable="isDraggable"
-          @dragstart="onDragStart"
-          @dragend="onDragEnd"
+          @mousedown.prevent="onStartDragging"
+          :draggable="false"
         />
 
         <div class="flex flex-col flex-1 gap-4">
@@ -81,6 +80,9 @@ import IconBow from '~/svg/bow.svg';
 import IconFlail from '~/svg/flail.svg';
 import Note from '~/components/molecules/sidebar/Note.vue';
 import { useGameStore } from '~/store/game.js';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
+import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
+import { useCurrentPhase } from '~/composables/game/useCurrentPhase';
 
 const { group, item, player } = defineProps({
   item: { type: Object, default: null },
@@ -88,11 +90,11 @@ const { group, item, player } = defineProps({
   group: { type: Array, default: () => [] },
 });
 
-const { activePlayerIndex, phase } = storeToRefs(useGameStore());
+const { canDrag } = useCurrentPhase();
+const { activePlayerIndex } = storeToRefs(useGameStore());
 const isStacked = computed(() => group?.length > 1);
-const isDraggable = computed(
-  () => activePlayerIndex.value === player.index && phase.value === 'UNIT_PLACEMENT',
-);
+
+const isDraggable = computed(() => activePlayerIndex.value === player.index && canDrag.value);
 const index = computed(() => group.findIndex(i => i.id === item.id));
 
 const rangeType = computed(() => {
@@ -120,15 +122,14 @@ const getHealthColor = (current, max) => {
   return 'bg-rose-600';
 };
 
-const onDragStart = e => {
-  e.dataTransfer.setData('fighterId', item.id);
-  item.drag = true;
-  e.dataTransfer.effectAllowed = 'move';
-  const dragIcon = e.target;
-  e.dataTransfer.setDragImage(dragIcon, 24, 24);
-};
+const { startDrag } = useGlobalDrag();
+const { executeDrop } = useKonvaPlacement();
 
-const onDragEnd = e => {
-  delete item.drag;
+const onStartDragging = () => {
+  if (!isDraggable.value) return;
+
+  startDrag(item, (event, fighter) => {
+    executeDrop(event, fighter);
+  });
 };
 </script>

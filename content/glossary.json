@@ -53,6 +53,11 @@
     { "id": "attack", "name": "Атака", "desc": "Выберите цель и совершите нападение.", "color": "#ef4444", "handler": "handleAttack" },
     { "id": "effect", "name": "Эффект", "desc": "Разыграйте карту с немедленным действием.", "color": "#f59e0b", "handler": "handleEffect" }
   ],
+  "highlighting": [
+    { "id": "spawn", "color": "#22d3ee"},
+    { "id": "movement", "color": "#34D399"},
+    { "id": "attack", "color": "#F87171"}
+  ],
   "mechanics": {
     "bonus": "Бонусное значение",
     "health": "Здоровье",
