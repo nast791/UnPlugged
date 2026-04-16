@@ -55,6 +55,7 @@ export const useUnitPlacement = () => {
 
     if (!isOccupied && points[unit.type]?.includes(circleId)) {
       unit.position = circleId;
+      unit.startPosition = circleId;
       addLog(`${unit.name} выставлен на позицию ${circleId}`, 'info');
       checkPlacementStatus();
     }

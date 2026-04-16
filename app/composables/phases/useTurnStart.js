@@ -3,15 +3,45 @@ import { useLogger } from '~/composables/game/useLogger';
 
 export const useTurnStart = () => {
   const store = useGameStore();
-  const { activePlayer, activePlayerIndex, turn, timer } = storeToRefs(store);
+  const { activePlayer, activePlayerIndex, turn, round, timer, players } = storeToRefs(store);
   const { addLog } = useLogger();
 
+  const isPlayerAlive = (player) => {
+    return player.fighters.some(f => f.type === 'hero' && f.hp > 0);
+  };
+
   const runTurnStart = () => {
-    activePlayerIndex.value = 1;
-    turn.value++;
-    addLog(`--- РАУНД ${turn.value} ---`, 'info');
-    addLog(`Ход игрока: ${activePlayer.value.name}`, 'info');
+    const totalPlayers = players.value.length;
+    let nextIndex = activePlayerIndex.value;
+    let foundNextPlayer = false;
+
+    for (let i = 0; i < totalPlayers; i++) {
+      nextIndex = nextIndex >= totalPlayers ? 1 : nextIndex + 1;
+
+      const potentialPlayer = players.value.find(p => p.index === nextIndex);
+      
+      if (potentialPlayer && isPlayerAlive(potentialPlayer)) {
+        if (nextIndex <= activePlayerIndex.value) {
+          round.value++;
+        }
+        
+        activePlayerIndex.value = nextIndex;
+        foundNextPlayer = true;
+        break;
+      }
+    }
+
+    if (!foundNextPlayer) {
+      console.error("Живых игроков не найдено!");
+      return store.goToPhase('GAME_OVER');
+    }
+
+    activePlayer.value.actionsUsed = 0;
     activePlayer.value.actionsPoints = 2;
+
+    turn.value++;
+    addLog(`Ход игрока: ${activePlayer.value.name} (Раунд ${round.value})`, 'info');
+ 
     startTimer();
     checkEffects();
     store.goToPhase('ACTION_SELECTION');
@@ -48,5 +78,5 @@ export const useTurnStart = () => {
     // Реализуем позже: вызов эффектов карт и пассивных умений
   };
 
-  return { runTurnStart, formattedTime };
+  return { runTurnStart, formattedTime, stopTimer, startTimer };
 };

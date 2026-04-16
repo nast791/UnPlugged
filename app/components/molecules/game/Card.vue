@@ -86,7 +86,7 @@ const { item, player } = defineProps({
 
 const { glossary } = storeToRefs(useAppStore());
 
-const settings = computed(() => glossary?.value?.meta?.cards?.[item.type] || {});
+const settings = computed(() => glossary?.value?.meta?.cards?.find(i => i.id === item.type) || {});
 
 const fighterName = computed(
   () => player?.fighters.find(i => item.fighter === i.id)?.name || 'все',

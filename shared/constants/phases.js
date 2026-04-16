@@ -10,7 +10,7 @@ export default [
     id: 'GAME_INIT',
     description: 'Подготовка колод, настройка карты, создание бойцов',
     onEnter: ({ runGameInit }) => runGameInit(),
-    next: [ 'UNIT_PLACEMENT'],
+    next: ['UNIT_PLACEMENT'],
   },
   {
     id: 'UNIT_PLACEMENT',
@@ -34,221 +34,50 @@ export default [
   {
     id: 'ACTION_SELECTION',
     description: 'Выбор действия',
-    // onEnter: ({ startSelection }) => {
-    //   startSelection();
-    // },
-    transitions: [
-      {
-        to: 'DRAW_CARD',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'DRAW_CARD',
-      },
-      {
-        to: 'ACTION_SELECTED',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.attack && ctx.phase === 'DRAW_CARD',
-      },
-      {
-        to: 'ACTION_SELECTED',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.effect && ctx.phase === 'DRAW_CARD',
-      },
-    ],
+    onEnter: ({ runActionSelection }) => runActionSelection(),
+    next: ['CARDS_DRAW'],
   },
   {
-    id: 'DRAW_CARD',
-    description: 'Добор карты',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'EXHAUSTION',
-        condition: ctx => ctx.deck?.length === 0 && ctx.phase === 'EXHAUSTION',
-      },
-      {
-        to: 'MOVEMENT_BONUS',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_BONUS',
-      },
-      {
-        to: 'MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_TO',
-      },
-      {
-        to: 'END_ACTION',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'END_ACTION',
-      },
-    ],
+    id: 'CARDS_DRAW',
+    description: 'Добор карт',
+    onEnter: ({ runCardsDraw }) => runCardsDraw(),
+    next: ['EXHAUSTION', 'MOVEMENT'],
   },
   {
     id: 'EXHAUSTION',
     description: 'Истощение',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      { 
-        to: 'GAME_OVER', 
-        condition: (ctx) => ctx.players.some(p => p.mainHero.hp <= 0) 
-      },
-      {
-        to: 'MOVEMENT_BONUS',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_BONUS',
-      },
-      {
-        to: 'MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_TO',
-      },
-      {
-        to: 'END_ACTION',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'END_ACTION',
-      },
-    ],
+    onEnter: ({ runExhaustion }) => runExhaustion(),
+    next: ['GAME_OVER', 'MOVEMENT'],
   },
   {
-    id: 'MOVEMENT_BONUS',
-    description: 'Добавление бонусного значения к своему перемещению',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'CANCEL_MOVEMENT_BONUS',
-        condition: ctx => ctx.phase === 'CANCEL_MOVEMENT_BONUS',
-      },
-      {
-        to: 'MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_TO',
-      },
-      {
-        to: 'END_ACTION',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'END_ACTION',
-      },
-    ],
-  },
-  {
-    id: 'CANCEL_MOVEMENT_BONUS',
-    description: 'Отмена добавление бонусного значения к своему перемещению',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'MOVEMENT_BONUS',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_BONUS',
-      },
-      {
-        to: 'MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_TO',
-      },
-      {
-        to: 'END_ACTION',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'END_ACTION',
-      },
-    ],
-  },
-  {
-    id: 'MOVEMENT_TO',
+    id: 'MOVEMENT',
     description: 'Движение',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'CANCEL_MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement &&
-          ctx.phase === 'CANCEL_MOVEMENT_TO',
-      },
-      {
-        to: 'MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_TO',
-      },
-      {
-        to: 'END_ACTION',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'END_ACTION',
-      },
-    ],
+    onEnter: ({ runMovement }) => runMovement(),
+    next: ['ACTION_END'],
   },
   {
-    id: 'CANCEL_MOVEMENT_TO',
-    description: 'Отмена движения',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'MOVEMENT_BONUS',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_BONUS',
-      },
-      {
-        to: 'CANCEL_MOVEMENT_BONUS',
-        condition: ctx => ctx.phase === 'CANCEL_MOVEMENT_BONUS',
-      },
-      {
-        to: 'MOVEMENT_TO',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'MOVEMENT_TO',
-      },
-      {
-        to: 'END_ACTION',
-        condition: (ctx, glossary) =>
-          ctx.intent.selectedAction === glossary.actions.movement && ctx.phase === 'END_ACTION',
-      },
-    ],
+    id: 'ACTION_END',
+    description: 'Завершение действия',
+    // onEnter: ({ runExhaustion }) => runExhaustion(),
+    next: ['ACTION_SELECTION', 'TURN_END'],
   },
   {
-    id: 'END_ACTION',
-    description: 'Окончание действия',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'ACTION_SELECTION',
-        condition: ctx =>
-          ctx.activePlayer.actionsUsed < ctx.activePlayer.actionsPoints &&
-          ctx.phase === 'ACTION_SELECTION',
-      },
-      {
-        to: 'END_TURN',
-        condition: ctx =>
-          ctx.activePlayer.actionsUsed === ctx.activePlayer.actionsPoints &&
-          ctx.phase === 'END_TURN',
-      },
-    ],
+    id: 'TURN_END',
+    description: 'Завершение хода',
+    // onEnter: ({ runExhaustion }) => runExhaustion(),
+    next: ['CARDS_DISCARD', 'TURN_START'],
   },
   {
-    id: 'END_TURN',
-    description: 'Окончание хода',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'DISCARD_CHOOSED_CARDS',
-        condition: ctx => ctx.activePlayer.hand.length > 7 && ctx.phase === 'DISCARD_CHOOSED_CARDS',
-      },
-      {
-        to: 'START_TURN',
-        condition: ctx => ctx.phase === 'START_TURN',
-      },
-    ],
-  },
-  {
-    id: 'DISCARD_CHOOSED_CARDS',
-    description: 'Сброс выбранных карт',
-    onEnter: ({ startSelection }) => {},
-    transitions: [
-      {
-        to: 'END_TURN',
-        condition: ctx => ctx.phase === 'END_TURN',
-      },
-    ],
+    id: 'CARDS_DISCARD',
+    description: 'Сброс карт',
+    // onEnter: ({ runExhaustion }) => runExhaustion(),
+    next: ['TURN_START'],
   },
   {
     id: 'GAME_OVER',
     description: 'Игра окончена',
-    onEnter: ({ startSelection }) => {},
-    transitions: [],
+    onEnter: ({ runGameOver }) => runGameOver(),
+    next: [],
   }
 ];
 

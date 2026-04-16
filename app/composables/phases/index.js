@@ -3,6 +3,11 @@ import { useGameInit } from "./useGameInit";
 import { useUnitPlacement } from "./useUnitPlacement";
 import { useGameStart } from "./useGameStart";
 import { useTurnStart } from "./useTurnStart";
+import { useActionSelection } from "./useActionSelection";
+import { useCardsDraw } from "./useCardsDraw";
+import { useExhaustion } from "./useExhaustion";
+import { useMovement } from "./useMovement";
+import { useGameOver } from "./useGameOver";
 
 export const useGamePhases = () => {
   const setup = useGameSetup();
@@ -10,6 +15,11 @@ export const useGamePhases = () => {
   const placement = useUnitPlacement();
   const startGame = useGameStart();
   const startTurn = useTurnStart();
+  const selectAction = useActionSelection();
+  const drawCards = useCardsDraw();
+  const exhaustion = useExhaustion();
+  const movement = useMovement();
+  const endGame = useGameOver();
 
   return {
     ...setup,
@@ -17,5 +27,10 @@ export const useGamePhases = () => {
     ...placement,
     ...startGame,
     ...startTurn,
+    ...selectAction,
+    ...drawCards,
+    ...exhaustion,
+    ...movement,
+    ...endGame,
   };
 };

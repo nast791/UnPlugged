@@ -20,7 +20,7 @@
             class="flex gap-8 items-start text-16 leading-snug"
             :class="[index === history?.length - 1 ? 'text-white' : 'text-slate-400']"
             v-if="
-              (item.type === 'action' && !item?.options?.some(i => i.clicked)) ||
+              (item.type === 'action' && item.playerId === activePlayer.id && isActivePlayerHuman) ||
               item.type !== 'action'
             "
           >
@@ -34,13 +34,13 @@
             v-if="
               item.type === 'action' &&
               item?.options?.length &&
-              !item?.options?.some(i => i.clicked)
+              item.playerId === activePlayer.id && isActivePlayerHuman
             "
             class="mt-3 flex flex-wrap gap-6"
           >
             <template v-for="it in item.options" :key="it.text">
               <button
-                @click="clickHandler(it)"
+                @click="clickHandler(it, item)"
                 class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-500/30 border border-slate-700 text-cyan-500 hover:bg-fuchsia-400 hover:text-slate-950 hover:border-fuchsia-500 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
               >
                 {{ it.text }}
@@ -57,13 +57,14 @@ import ScrollArea from '~/components/atoms/ScrollArea.vue';
 import { useGameStore } from '~/store/game.js';
 import {useTurnStart} from '~/composables/phases/useTurnStart';
 
-const { history, turn } = storeToRefs(useGameStore());
+const { history, turn, activePlayer, isActivePlayerHuman } = storeToRefs(useGameStore());
 const { formattedTime } = useTurnStart();
 const scrollAreaRef = ref(null);
 
-const clickHandler = (it) => {
+const clickHandler = (it, item) => {
   it.clicked = true;
   it.action();
+  history.value = history.value.filter(i => i.id !== item.id);
 };
 
 watch(

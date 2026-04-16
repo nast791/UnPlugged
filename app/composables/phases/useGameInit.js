@@ -34,8 +34,11 @@ export const useGameInit = () => {
           type: 'hero',
           image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
           currentHp: i.hp,
+          startPosition: null,
           position: null,
           active: false,
+          canPassThroughEnemies: false,
+          bonusMovement: 0
         })) || [];
 
       player.assistants?.forEach(i => {
@@ -44,11 +47,14 @@ export const useGameInit = () => {
             ...i,
             type: 'assistant',
             currentHp: i.hp,
+            startPosition: null,
             position: null,
             image: `${nuxtConfig.public.pack}${player.folder}${i.image}`,
             id: i.count ? `${i.id}_${item + 1}` : i.id,
             group: i.count ? i.id : null,
             active: false,
+            canPassThroughEnemies: false,
+            bonusMovement: 0
           });
         }
       });
@@ -84,8 +90,6 @@ export const useGameInit = () => {
         },
         actionsPoints: 0,
         actionsUsed: 0,
-        canPassThroughEnemies: false,
-        movementBonus: 0,
       };
     });
 

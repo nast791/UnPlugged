@@ -6,20 +6,20 @@ export const useGameStore = defineStore('game', {
   state: () => ({
     id: null,
     phase: null,
-    isPhaseAction: false, //?
     map: null,
-    isGameStarted: false, //?
     activePlayerIndex: 0,
     players: [],
     timer: 0,
     turn: 0,
-    intent: {
-      selectedAction: null,
-      selectedCardId: null,
-      selectedUnitId: null,
-      targets: [],
-    },
+    round: 0,
+    selectedAction: null,
+    selectedCardId: null,
+    bonusMovement: 0,
+    bonusMovementCardId: null,
+    discardLimit: 0,
+    selectedUnitId: null,
     history: [],
+    winner: null
   }),
   getters: {
     activePlayer: state => state.players?.find(i => i.index === state.activePlayerIndex),
@@ -31,7 +31,7 @@ export const useGameStore = defineStore('game', {
     selectedActionName: state => {
       const { glossary } = storeToRefs(useAppStore());
       return (
-        glossary.value?.meta?.actions?.find(i => i.id === state.intent.selectedAction)?.name || ''
+        glossary.value?.meta?.actions?.find(i => i.id === state.selectedAction)?.name || ''
       );
     },
   },

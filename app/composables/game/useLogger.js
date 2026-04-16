@@ -32,7 +32,7 @@ export const useLogger = () => {
     addLog(
       message,
       'action',
-      actions.map(i => ({...i, clicked: false})),
+      actions,
       `${activePlayer.value?.id}_${phase.value}_${turn.value}_${id}`
     )
   };
