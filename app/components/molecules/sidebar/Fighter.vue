@@ -1,12 +1,13 @@
 <template>
   <div
-    class="flex flex-col p-12 rounded-12 bg-linear-to-r from-white/5 to-transparent bg-[#1b1c21] border transition-all border-white/30 relative overflow-hidden group"
+    class="flex flex-col p-12 rounded-12 bg-linear-to-r from-white/5 to-transparent bg-black-100 border transition-all border-white/30 relative overflow-hidden group"
     :class="[
       item.acted && 'grayscale',
       isStacked && index > 0 && `-mt-50`,
       isStacked && !item.active && `z-${index}`,
-      item.active && `z-1000!`,
+      item.active && `z-1000! border-(--brand-color)! to-white-30!`,
     ]"
+    :style="{ '--brand-color': player.color }"
     v-if="item && player"
     @click.stop="setActiveItem()"
   >
@@ -91,7 +92,7 @@ const { group, item, player } = defineProps({
 });
 
 const { canDrag } = useCurrentPhase();
-const { activePlayerIndex } = storeToRefs(useGameStore());
+const { activePlayerIndex, activePlayer } = storeToRefs(useGameStore());
 const isStacked = computed(() => group?.length > 1);
 
 const isDraggable = computed(() => activePlayerIndex.value === player.index && canDrag.value);
@@ -109,10 +110,9 @@ const rangeType = computed(() => {
 });
 
 const setActiveItem = () => {
-  if (item.active) return;
-  const currentActive = group.find(i => i.active);
-  if (currentActive) currentActive.active = false;
-  item.active = true;
+  if (!activePlayer.value.fighters.find(i => i.id === item.id)) return;
+  activePlayer.value.fighters.filter(i => i.id !== item.id).forEach(i => (i.active = false));
+  item.active = !item.active;
 };
 
 const getHealthColor = (current, max) => {

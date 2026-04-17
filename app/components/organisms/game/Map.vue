@@ -2,7 +2,13 @@
   <section ref="mapContainer" class="relative overflow-hidden min-h-0 min-w-0 z-1">
     <ClientOnly>
       <div v-if="map">
-        <v-stage ref="stageRef" :config="stageConfig" @wheel="handleWheel">
+        <v-stage
+          ref="stageRef"
+          :config="stageConfig"
+          @wheel="handleWheel"
+          @mousedown="handleStageClick"
+          @touchstart="handleStageClick"
+        >
           <v-layer>
             <!-- 1. ФОН -->
             <MapBackground :imageUrl="map.image" @loaded="onMapLoaded" />
@@ -16,18 +22,21 @@
               :key="node.id"
               :node="node"
               :nodeSize="nodeSize"
+              :is-highlighted="checkIfHighlighted(node.id)"
+              :highlight-type="currentHighlightType"
               @select="handleNodeClick"
             />
 
             <!-- 4. ГЕРОИ -->
             <template v-for="hero in players" :key="hero.id">
-              <MapHero
+              <MapFighter
                 :position="getNodePosition(item.position, nodes)"
                 :imageUrl="item.image"
                 :nodeSize="nodeSize"
                 :scale="currentScale"
                 :color="hero.color"
                 :item="item"
+                v-model="highlightedCells"
                 v-for="item in hero?.fighters"
                 :key="item.id"
               />
@@ -56,12 +65,13 @@
 <script setup>
 import MapLines from '~/components/molecules/map/MapLines.vue';
 import MapNode from '~/components/molecules/map/MapNode.vue';
-import MapHero from '~/components/molecules/map/MapHero.vue';
+import MapFighter from '~/components/molecules/map/MapFighter.vue';
 import MapBackground from '~/components/molecules/map/MapBackground.vue';
 import { useGameStore } from '~/store/game.js';
 import useKonvaCamera from '~/composables/konva/useKonvaCamera';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
+import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -73,7 +83,7 @@ const stageConfig = ref({
 const currentScale = ref(1);
 const observer = ref(null);
 
-const { map, players, activePlayer } = storeToRefs(useGameStore());
+const { map, players, phase, activePlayer } = storeToRefs(useGameStore());
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
 const { getNodePosition } = useUtils();
 
@@ -81,6 +91,7 @@ const connections = computed(() => map.value?.connections || []);
 const nodes = computed(() => map.value?.circles || []);
 const nodeSize = computed(() => map.value?.settings?.nodeSize);
 const { dragItem, mousePos } = useGlobalDrag();
+const { availableSpawnPoints } = useUnitPlacement();
 
 const currentMapImg = ref(null);
 
@@ -100,7 +111,10 @@ const updateDimensions = () => {
   }
 };
 
+const { registerMap } = useKonvaPlacement();
+
 onMounted(async () => {
+  registerMap(stageRef, nodes, nodeSize);
   updateDimensions();
   observer.value = new ResizeObserver(updateDimensions);
   if (mapContainer.value) {
@@ -122,9 +136,38 @@ const handleWheel = e => {
   zoomToPoint(e);
 };
 
-const { registerMap } = useKonvaPlacement();
+const highlightedCells = ref([]);
 
-onMounted(() => {
-  registerMap(stageRef, nodes, nodeSize);
+const handleStageClick = e => {
+  const clickedOnEmpty = e.target === e.target.getStage();
+  if (clickedOnEmpty) {
+    clearMap();
+  }
+};
+
+const clearMap = () => {
+  highlightedCells.value = [];
+  activePlayer.value?.fighters.forEach(f => (f.active = false));
+};
+
+const checkIfHighlighted = nodeId => {
+  const id = String(nodeId);
+
+  if (dragItem.value) {
+    const type = dragItem.value.type;
+    return availableSpawnPoints.value[type]?.map(String).includes(id);
+  }
+
+  if (highlightedCells.value?.length) {
+    return highlightedCells.value.map(String).includes(id);
+  }
+
+  return false;
+};
+
+const currentHighlightType = computed(() => {
+  if (phase.value === 'UNIT_PLACEMENT') return 0;
+  if (phase.value === 'MOVEMENT') return 1;
+  return 0;
 });
 </script>

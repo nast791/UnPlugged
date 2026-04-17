@@ -2,12 +2,14 @@ import { useGameStore } from '~/store/game.js';
 import { useAppStore } from '~/store/app';
 import { storeToRefs } from 'pinia';
 import { useLogger } from '~/composables/game/useLogger';
+import { useDeck } from '~/composables/game/useDeck';
 
 export const useActionSelection = () => {
   const appStore = useAppStore();
   const store = useGameStore();
   const { activePlayer, players } = storeToRefs(store);
   const { addLog, addActions } = useLogger();
+  const { drawCards } = useDeck();
 
   const runActionSelection = () => {
     store.selectedAction = null;
@@ -72,6 +74,8 @@ export const useActionSelection = () => {
     if (fighter.attackType === 'ranged') {
       return fighterNode.zones.some(z => enemyNode.zones.includes(z));
     }
+
+    return false;
   };
 
   const checkPathDistance = (startId, targetId, maxDist) => {
@@ -103,9 +107,9 @@ export const useActionSelection = () => {
   const finishActionSelection = actionId => {
     store.selectedAction = actionId;
     addLog(`Игрок ${activePlayer.value.name} выбрал действие ${store.selectedActionName}`, 'info');
-    if (actionId === 'movement') store.goToPhase('CARDS_DRAW');
+    if (actionId === 'movement') drawCards(1, 'MOVEMENT');
     else if (actionId === 'attack') store.goToPhase('TARGET_SELECTION');
-    else if (actionId === 'effect') store.goToPhase('SCHEME_SELECTION');
+    else if (actionId === 'effect') store.goToPhase('EFFECT_SELECTION');
   };
 
   return { runActionSelection };

@@ -40,6 +40,7 @@
           >
             <template v-for="it in item.options" :key="it.text">
               <button
+                :disabled="it.disabled"
                 @click="clickHandler(it, item)"
                 class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-500/30 border border-slate-700 text-cyan-500 hover:bg-fuchsia-400 hover:text-slate-950 hover:border-fuchsia-500 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
               >

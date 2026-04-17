@@ -7,8 +7,6 @@
 </template>
 
 <script setup>
-import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
-import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
 import { useAppStore } from '~/store/app.js';
 
 defineOptions({
@@ -18,24 +16,21 @@ defineOptions({
 const props = defineProps({
   node: { type: Object, required: true },
   nodeSize: { type: Number, default: 40 },
+  isHighlighted: { type: Boolean, default: false },
+  highlightType: { type: Number, default: 0 } 
 });
 
 const emit = defineEmits(['select']);
 const appStore = useAppStore();
+const { $handleNodeClick } = useNuxtApp();
 
 const isHovered = ref(false);
-const { dragItem } = useGlobalDrag();
-const { availableSpawnPoints } = useUnitPlacement();
 
 const highlightings = appStore.glossary?.meta?.highlighting;
 
 const activeStatus = computed(() => {
-  if (dragItem.value) {
-    const type = dragItem.value.type;
-    const isSpawn = availableSpawnPoints.value[type]?.map(String).includes(String(props.node.id));
-    return isSpawn ? highlightings?.[0] : null;
-  }
-  return null;
+  if (!props.isHighlighted) return null;
+  return highlightings?.[props.highlightType] || highlightings?.[0];
 });
 
 const groupConfig = computed(() => ({
@@ -82,6 +77,9 @@ const highlightConfig = computed(() => ({
 
 const handlePointerClick = e => {
   if (e.cancelBubble !== undefined) e.cancelBubble = true;
+  if (activeStatus.value) {
+    $handleNodeClick(props.node.id);
+  }
   emit('select', e, props.node.id);
 };
 </script>

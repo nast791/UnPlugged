@@ -8,7 +8,6 @@ export const useGameInit = () => {
   const { shuffle } = useUtils();
   const nuxtConfig = useRuntimeConfig();
   const appStore = useAppStore();
-  const human = appStore.glossary?.meta?.players?.[0];
 
   const runGameInit = async () => {
     const { suspense: suspenseMap } = getMap();
@@ -23,7 +22,7 @@ export const useGameInit = () => {
       player.cards.forEach(card => {
         const qty = card.quantity || 1;
         for (let i = 0; i < qty; i++) {
-          fullDeck.push({ ...card, instanceId: `${card.id}_${i}` });
+          fullDeck.push({ ...card, instanceId: `${card.id}_${i}`, isReversed: false });
         }
       });
       const shuffledCards = shuffle(fullDeck);
@@ -90,6 +89,8 @@ export const useGameInit = () => {
         },
         actionsPoints: 0,
         actionsUsed: 0,
+        minHandSize: 0,
+        maxHandSize: 7
       };
     });
 

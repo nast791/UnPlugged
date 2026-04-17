@@ -16,7 +16,6 @@ export const useGameStore = defineStore('game', {
     selectedCardId: null,
     bonusMovement: 0,
     bonusMovementCardId: null,
-    discardLimit: 0,
     selectedUnitId: null,
     history: [],
     winner: null

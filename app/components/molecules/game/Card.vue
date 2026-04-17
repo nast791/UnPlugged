@@ -1,7 +1,9 @@
 <template>
   <div
     class="flex flex-col relative aspect-[5/7] w-full @container rounded-[0.5cqw] overflow-hidden shadow-2xl border-[0.05cqw] border-black bg-slate-900 group select-none"
+    :class="[item.isReversed ? '-translate-y-[3%]' : 'hover:-translate-y-[3%]']"
     :style="{ '--brand-color': settings.color }"
+    @click="$handleCardClick(item)"
   >
     <div class="relative aspect-square overflow-hidden">
       <NuxtImg
@@ -91,4 +93,6 @@ const settings = computed(() => glossary?.value?.meta?.cards?.find(i => i.id ===
 const fighterName = computed(
   () => player?.fighters.find(i => item.fighter === i.id)?.name || 'все',
 );
+
+const { $handleCardClick } = useNuxtApp();
 </script>

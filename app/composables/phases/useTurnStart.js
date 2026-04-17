@@ -6,7 +6,7 @@ export const useTurnStart = () => {
   const { activePlayer, activePlayerIndex, turn, round, timer, players } = storeToRefs(store);
   const { addLog } = useLogger();
 
-  const isPlayerAlive = (player) => {
+  const isPlayerAlive = player => {
     return player.fighters.some(f => f.type === 'hero' && f.hp > 0);
   };
 
@@ -19,12 +19,12 @@ export const useTurnStart = () => {
       nextIndex = nextIndex >= totalPlayers ? 1 : nextIndex + 1;
 
       const potentialPlayer = players.value.find(p => p.index === nextIndex);
-      
+
       if (potentialPlayer && isPlayerAlive(potentialPlayer)) {
         if (nextIndex <= activePlayerIndex.value) {
           round.value++;
         }
-        
+
         activePlayerIndex.value = nextIndex;
         foundNextPlayer = true;
         break;
@@ -32,16 +32,20 @@ export const useTurnStart = () => {
     }
 
     if (!foundNextPlayer) {
-      console.error("Живых игроков не найдено!");
+      console.error('Живых игроков не найдено!');
       return store.goToPhase('GAME_OVER');
     }
 
     activePlayer.value.actionsUsed = 0;
     activePlayer.value.actionsPoints = 2;
+    activePlayer.value.fighters?.forEach(f => {
+      f.active = false;
+      f.startPosition = f.position;
+    });
 
     turn.value++;
     addLog(`Ход игрока: ${activePlayer.value.name} (Раунд ${round.value})`, 'info');
- 
+
     startTimer();
     checkEffects();
     store.goToPhase('ACTION_SELECTION');
