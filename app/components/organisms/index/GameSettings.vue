@@ -13,7 +13,12 @@
       <Maps :maps="maps" />
     </div>
 
-    <Footer :players="players" :map="map" @start="finishGameSetup()" />
+    <Footer
+      :players="selectedPlayers"
+      :map="selectedMap"
+      :isReady="!!isReadyToStart"
+      @start="runGameInit()"
+    />
   </section>
 </template>
 <script setup>
@@ -30,14 +35,25 @@ import Maps from '~/components/molecules/settings/Maps.vue';
 import Footer from '~/components/molecules/settings/Footer.vue';
 import { usePlugins } from '~/composables/api/plugins';
 import { useGameStore } from '~/store/game.js';
-import { useGameSetup } from '~/composables/phases/useGameSetup';
+import { useGameInit } from '~/composables/game/useGameInit';
+import { useAppStore } from '~/store/app';
 
-const { players, phase, map } = storeToRefs(useGameStore());
-const { finishGameSetup } = useGameSetup();
+const { selectedPlayers, selectedMap } = storeToRefs(useGameStore());
+const { runGameInit } = useGameInit();
+const appStore = useAppStore();
 
 const { suspense, heroes, maps } = usePlugins();
 
 await Promise.all([suspense()]);
 
 const emits = defineEmits(['close']);
+
+const isReadyToStart = computed(() => {
+  return (
+    selectedMap.value?.id &&
+    selectedPlayers.value?.length === 2 &&
+    selectedPlayers.value?.find(i => i.type === appStore.glossary?.meta?.players?.[0]?.id) &&
+    selectedPlayers.value?.find(i => i.type === appStore.glossary?.meta?.players?.[1]?.id)
+  );
+});
 </script>

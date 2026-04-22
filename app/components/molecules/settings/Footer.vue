@@ -14,7 +14,7 @@
 
     <Primitive
       as="button"
-      :disabled="!canStart"
+      :disabled="!isReady"
       :class="styles.startButton()"
       @click="$emit('start')"
     >
@@ -28,7 +28,8 @@ import { useAppStore } from '~/store/app';
 
 const {players, map} = defineProps({
   players: { type: Array, default: () => [] },
-  map: { type: Object, default: null }
+  map: { type: Object, default: null },
+  isReady: { type: Boolean, default: false }
 });
 
 const { glossary } = storeToRefs(useAppStore());
@@ -37,7 +38,6 @@ defineEmits(['start']);
 const human = computed(() => glossary.value?.meta?.players?.[0]);
 const hasPlayer = computed(() => players.some(i => i.type === human.value?.id));
 const isValidSelection = computed(() => players.length > 1 && map && hasPlayer.value);
-const canStart = computed(() => players.length >= 2 && hasPlayer.value && map);
 
 const footerStyles = tv({
   slots: {

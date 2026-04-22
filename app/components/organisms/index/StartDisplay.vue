@@ -30,14 +30,10 @@
 <script setup>
 import Modal from '~/components/atoms/Modal.vue';
 import GameSettings from '~/components/organisms/index/GameSettings.vue';
-import { useGameSetup } from '~/composables/phases/useGameSetup';
-import { useGameStore } from '~/store/game.js';
 
 const isModalOpen = ref(false);
-const { runGameSetup } = useGameSetup();
 
 const startNewGame = () => {
   isModalOpen.value = true;
-  runGameSetup();
 };
 </script>

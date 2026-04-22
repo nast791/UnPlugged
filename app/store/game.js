@@ -4,6 +4,11 @@ import GAME_PHASES from '#shared/constants/phases';
 
 export const useGameStore = defineStore('game', {
   state: () => ({
+    selectedMap: null,
+    selectedPlayers: [],
+    localPlayerId: '0',
+    activeSetupData: null,
+    
     id: null,
     phase: null,
     map: null,

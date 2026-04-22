@@ -13,6 +13,9 @@ export const useActionSelection = () => {
 
   const runActionSelection = () => {
     store.selectedAction = null;
+    activePlayer.value.fighters?.forEach(f => {
+      f.active = false;
+    });
 
     if (activePlayer.value.type === 'ai') {
       // handleAISelection() - логику весов внедрим позже

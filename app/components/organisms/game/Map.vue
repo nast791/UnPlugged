@@ -1,7 +1,7 @@
 <template>
   <section ref="mapContainer" class="relative overflow-hidden min-h-0 min-w-0 z-1">
     <ClientOnly>
-      <div v-if="map">
+      <div v-if="G">
         <v-stage
           ref="stageRef"
           :config="stageConfig"
@@ -10,13 +10,10 @@
           @touchstart="handleStageClick"
         >
           <v-layer>
-            <!-- 1. ФОН -->
-            <MapBackground :imageUrl="map.image" @loaded="onMapLoaded" />
+            <MapBackground :imageUrl="mapData.image" @loaded="onMapLoaded" />
 
-            <!-- 2. ЛИНИИ (под нодами) -->
             <MapLines :lines="connections" />
 
-            <!-- 3. НОДЫ -->
             <MapNode
               v-for="node in nodes"
               :key="node.id"
@@ -27,17 +24,16 @@
               @select="handleNodeClick"
             />
 
-            <!-- 4. ГЕРОИ -->
-            <template v-for="hero in players" :key="hero.id">
+            <template v-for="player in playersData" :key="player.id">
               <MapFighter
                 :position="getNodePosition(item.position, nodes)"
                 :imageUrl="item.image"
                 :nodeSize="nodeSize"
                 :scale="currentScale"
-                :color="hero.color"
+                :color="player.color"
                 :item="item"
                 v-model="highlightedCells"
-                v-for="item in hero?.fighters"
+                v-for="item in player?.fighters"
                 :key="item.id"
               />
             </template>
@@ -67,11 +63,11 @@ import MapLines from '~/components/molecules/map/MapLines.vue';
 import MapNode from '~/components/molecules/map/MapNode.vue';
 import MapFighter from '~/components/molecules/map/MapFighter.vue';
 import MapBackground from '~/components/molecules/map/MapBackground.vue';
-import { useGameStore } from '~/store/game.js';
 import useKonvaCamera from '~/composables/konva/useKonvaCamera';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
-import { useUnitPlacement } from '~/composables/phases/useUnitPlacement';
+import { useBoardgame } from '~/composables/game/useBoardgame';
+import { getAvailablePoints } from '#shared/utils/phases/placement';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -83,15 +79,18 @@ const stageConfig = ref({
 const currentScale = ref(1);
 const observer = ref(null);
 
-const { map, players, phase, activePlayer } = storeToRefs(useGameStore());
-const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
-const { getNodePosition } = useUtils();
+const { client, G, ctx } = useBoardgame();
 
-const connections = computed(() => map.value?.connections || []);
-const nodes = computed(() => map.value?.circles || []);
-const nodeSize = computed(() => map.value?.settings?.nodeSize);
+const mapData = computed(() => G.value?.map);
+const playersData = computed(() => G.value?.players || []);
+const currentPhase = computed(() => ctx.value?.phase);
+const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
+const { getNodePosition, getGameTime } = useUtils();
+
+const connections = computed(() => mapData.value?.connections || []);
+const nodes = computed(() => mapData.value?.circles || []);
+const nodeSize = computed(() => mapData.value?.settings?.nodeSize);
 const { dragItem, mousePos } = useGlobalDrag();
-const { availableSpawnPoints } = useUnitPlacement();
 
 const currentMapImg = ref(null);
 
@@ -128,10 +127,6 @@ onUnmounted(() => {
   }
 });
 
-const handleNodeClick = (e, nodeId) => {
-  console.log('Выбрана нода для хода/действия:', nodeId);
-};
-
 const handleWheel = e => {
   zoomToPoint(e);
 };
@@ -147,27 +142,37 @@ const handleStageClick = e => {
 
 const clearMap = () => {
   highlightedCells.value = [];
-  activePlayer.value?.fighters.forEach(f => (f.active = false));
+  if (client.value) {
+    client.value.moves.resetAllFighters();
+  }
+};
+
+const handleNodeClick = (e, nodeId) => {
+  if (!client.value) return;
+
+  if (currentPhase.value === 'UNIT_PLACEMENT' && dragItem.value) {
+    client.value.moves.placeUnit({
+      fighterId: dragItem.value.id,
+      nodeId: nodeId,
+      time: getGameTime()
+    });
+  }
 };
 
 const checkIfHighlighted = nodeId => {
   const id = String(nodeId);
-
-  if (dragItem.value) {
+  if (currentPhase.value === 'UNIT_PLACEMENT' && dragItem.value) {
+    const points = getAvailablePoints(G.value, ctx.value, dragItem.value.id);
     const type = dragItem.value.type;
-    return availableSpawnPoints.value[type]?.map(String).includes(id);
+    return points[type]?.map(String).includes(id);
   }
 
-  if (highlightedCells.value?.length) {
-    return highlightedCells.value.map(String).includes(id);
-  }
-
-  return false;
+  return highlightedCells.value.map(String).includes(id);
 };
 
 const currentHighlightType = computed(() => {
-  if (phase.value === 'UNIT_PLACEMENT') return 0;
-  if (phase.value === 'MOVEMENT') return 1;
+  if (currentPhase.value === 'UNIT_PLACEMENT') return 0;
+  if (currentPhase.value === 'MOVEMENT') return 1;
   return 0;
 });
 </script>

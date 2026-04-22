@@ -39,96 +39,44 @@ export const usePlugins = () => {
   };
 };
 
-export const getMap = () => {
+export const getMap = (isEnabled) => {
   const config = useRuntimeConfig();
-  const { map } = storeToRefs(useGameStore());
+  const { selectedMap } = storeToRefs(useGameStore());
 
-  const query = useQuery({
-    queryKey: ['get-map', unref(map).id],
+  return useQuery({
+    queryKey: ['get-map', unref(selectedMap)?.id],
     queryFn: async () => {
-      const data = await useApi()(`${config.public.pack}${map.value?.folder}index.json?v=2`);
-      return typeof data === 'string' ? JSON.parse(data) : data;
+      const data = await useApi()(
+        `${config.public.pack}${selectedMap.value?.folder}index.json?v=2`,
+      );
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      return { ...parsed, ...selectedMap.value };
     },
+    enabled: isEnabled,
   });
-
-  watch(
-    query.data,
-    newMap => {
-      if (newMap && Object.keys(newMap)?.length) {
-        map.value = { ...newMap, ...map.value };
-      }
-    },
-    { immediate: true },
-  );
-
-  return {
-    ...query,
-  };
 };
 
-export const getHeroes = () => {
+export const getHeroes = (isEnabled) => {
   const config = useRuntimeConfig();
-  const { players } = storeToRefs(useGameStore());
-  const { cloneDeep } = useUtils();
+  const { selectedPlayers } = storeToRefs(useGameStore());
 
-  const queries = useQueries({
-    queries: players.value.map(hero => ({
-      queryKey: ['get-hero', unref(hero).id],
-      queryFn: async () => {
+  return useQuery({
+    queryKey: ['get-all-heroes', selectedPlayers.value.map(p => p.id)],
+    queryFn: async () => {
+      const promises = selectedPlayers.value.map(async hero => {
         const baseUrl = `${config.public.pack}${hero.folder}`;
         const [heroData, deckData] = await Promise.all([
           useApi()(`${baseUrl}${hero.main}?v=2`),
           useApi()(`${baseUrl}${hero.deck}?v=2`),
         ]);
         return {
-          ...heroData,
-          cards: deckData,
+          ...(typeof heroData === 'string' ? JSON.parse(heroData) : heroData),
+          cards: typeof deckData === 'string' ? JSON.parse(deckData) : deckData,
+          ...hero,
         };
-      },
-    })),
-  });
-
-  const allLoaded = computed(() => queries.value.every(q => q.isSuccess));
-
-  watch(
-    allLoaded,
-    ready => {
-      if (ready) {
-        const fullHeroesData = queries.value.map((q, index) => {
-          const apiData = cloneDeep(q.data); 
-          return {
-            ...apiData,
-            ...players.value[index],
-          }
-        });
-        players.value = fullHeroesData;
-      }
+      });
+      return Promise.all(promises);
     },
-    { immediate: true },
-  );
-
-  const suspense = () => {
-    return new Promise(resolve => {
-      if (allLoaded.value) {
-        return resolve(true);
-      }
-
-      const unwatch = watch(
-        allLoaded,
-        ready => {
-          if (ready) {
-            unwatch();
-            resolve(true);
-          }
-        },
-        { immediate: true },
-      );
-    });
-  };
-
-  return {
-    queries,
-    suspense,
-    allLoaded,
-  };
+    enabled: isEnabled,
+  });
 };

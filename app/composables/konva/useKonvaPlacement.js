@@ -1,11 +1,11 @@
-import {useUnitPlacement} from '~/composables/phases/useUnitPlacement';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const dropHandler = ref(null);
 
 export const useKonvaPlacement = () => {
-  const { placeUnit } = useUnitPlacement();
+  const { client, G, ctx } = useBoardgame();
+  const { getGameTime } = useUtils();
 
-  // Регистрация карты (вызывает Карта при mounted)
   const registerMap = (stageRef, nodes, nodeSize) => {
     if (!import.meta.client) return;
 
@@ -23,16 +23,18 @@ export const useKonvaPlacement = () => {
 
       const closestNode = nodes.value.find(node => {
         const dist = Math.sqrt(Math.pow(node.x - pointerPos.x, 2) + Math.pow(node.y - pointerPos.y, 2));
-        // Используем 1.5 радиуса для "липкости"
         return dist < (nodeSize.value * 0.75); 
       });
 
       if (closestNode) {
-        placeUnit(dragItem.id, closestNode.id);
+        client.value.moves.placeUnit({ 
+          fighterId: dragItem.id, 
+          circleId: closestNode.id,
+          time: getGameTime()
+        });
       }
     };
 
-    // Очистка при размонтировании карты, чтобы не было утечек памяти
     onUnmounted(() => {
       dropHandler.value = null;
     });

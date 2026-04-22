@@ -89,17 +89,17 @@ import Fighter from '~/components/molecules/sidebar/Fighter.vue';
 import Resources from '~/components/molecules/sidebar/Resources.vue';
 import Card from '~/components/molecules/sidebar/Card.vue';
 import Console from '~/components/molecules/sidebar/Console.vue';
-import { useGameStore } from '~/store/game.js';
 import Window from '~/components/atoms/Window.vue';
 import { useAppStore } from '~/store/app.js';
-
-const { map, players, turn, activePlayerIndex, activePlayer } = storeToRefs(useGameStore());
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const emit = defineEmits(['showStats', 'openDiscard', 'zoomEffect']);
-
+const { client, G, ctx } = useBoardgame();
 const { glossary } = storeToRefs(useAppStore());
 
 const decks = computed(() => glossary?.value?.meta?.decks || {});
+const players = computed(() => G.value?.players || []);
+const activePlayerIndex = computed(() => ctx.value?.currentPlayer);
 
 const activeWindows = ref([]);
 

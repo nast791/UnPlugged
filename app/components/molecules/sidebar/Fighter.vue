@@ -80,10 +80,9 @@ import IconSword from '~/svg/sword.svg';
 import IconBow from '~/svg/bow.svg';
 import IconFlail from '~/svg/flail.svg';
 import Note from '~/components/molecules/sidebar/Note.vue';
-import { useGameStore } from '~/store/game.js';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
-import { useCurrentPhase } from '~/composables/game/useCurrentPhase';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const { group, item, player } = defineProps({
   item: { type: Object, default: null },
@@ -91,11 +90,16 @@ const { group, item, player } = defineProps({
   group: { type: Array, default: () => [] },
 });
 
-const { canDrag } = useCurrentPhase();
-const { activePlayerIndex, activePlayer } = storeToRefs(useGameStore());
+const { client, G, ctx } = useBoardgame();
 const isStacked = computed(() => group?.length > 1);
 
-const isDraggable = computed(() => activePlayerIndex.value === player.index && canDrag.value);
+const isDraggable = computed(() => {
+  if (!ctx.value) return false;
+  const isMyTurn = ctx.value.currentPlayer === String(player.index - 1); 
+  const isPlacement = ctx.value.phase === 'UNIT_PLACEMENT';
+  return isMyTurn && isPlacement;
+});
+
 const index = computed(() => group.findIndex(i => i.id === item.id));
 
 const rangeType = computed(() => {
@@ -110,9 +114,14 @@ const rangeType = computed(() => {
 });
 
 const setActiveItem = () => {
-  if (!activePlayer.value.fighters.find(i => i.id === item.id)) return;
-  activePlayer.value.fighters.filter(i => i.id !== item.id).forEach(i => (i.active = false));
-  item.active = !item.active;
+  if (ctx.value.currentPlayer !== String(player.index - 1)) return;
+
+  if (item.active) {
+    client.value.moves.resetAllFighters();
+  } else {
+    client.value.moves.resetAllFighters();
+    client.value.moves.setFighterActive({ fighterId: item.id, active: true });
+  }
 };
 
 const getHealthColor = (current, max) => {

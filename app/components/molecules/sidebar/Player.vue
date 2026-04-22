@@ -44,17 +44,20 @@
   </div>
 </template>
 <script setup>
-import { useGameStore } from '~/store/game.js';
 import useUtils from '~/composables/useUtils';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
-const { item } = defineProps({
+const { item, num } = defineProps({
   item: { type: Object, default: null },
   num: { type: Number },
 });
 
-const { activePlayerIndex, isGameStarted } = storeToRefs(useGameStore());
-const role = computed(() => (item.type === 'ai' ? 'ИИ' : 'Вы'));
-const isTurn = computed(() => +activePlayerIndex.value === +item.index);
+const { client, G, ctx } = useBoardgame();
+const role = computed(() => {
+  if (item.type === 'ai') return 'ИИ';
+  return String(num) === client.value?.playerID ? 'Вы' : 'Оппонент';
+});
+const isTurn = computed(() => ctx.value?.currentPlayer === String(num));
 
 const { getContrastColor } = useUtils();
 </script>
