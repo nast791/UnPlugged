@@ -1,11 +1,12 @@
 import { INVALID_MOVE } from 'boardgame.io/core';
+import { addLog } from '#shared/utils/log';
 
 export const getAvailablePoints = (G, ctx, fighterId) => {
   const player = G.players[ctx.currentPlayer];
   const fighter = player.fighters.find(f => f.id === fighterId);
   if (!fighter) return { hero: [], assistant: [] };
 
-  const heroStartNode = G.map.circles.find(i => i.position === Number(ctx.currentPlayer));
+  const heroStartNode = G.map.circles.find(i => i.position === Number(ctx.currentPlayer) + 1);
   if (!heroStartNode) return { hero: [], assistant: [] };
 
   const zoneColors = heroStartNode.zones || [];
@@ -28,38 +29,34 @@ export const getAvailablePoints = (G, ctx, fighterId) => {
 };
 
 export const placementPhase = {
-  turn: {
-    onBegin: (G, ctx) => {
-      if (!G || !G.players) return;
+  onBegin: ({G, ctx, events}) => {
+    if (!G?.players) return;
 
-      const time = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-
-      const player = G?.players?.[ctx?.currentPlayer];
-      if (player.type === 'human') {
-        G.log.push({ msg: `Игрок ${player.name}: расставьте бойцов`, type: 'info', time });
-      } else {
-        G.log.push({ msg: `Игрок ${player.name} расставляет силы...`, type: 'info', time });
-        autoPlaceAI(G, ctx);
-      }
-    },
+    const player = G?.players?.[ctx?.currentPlayer];
+    if (player.type === 'human') {
+      addLog(G, `Игрок ${player.name}: расставьте бойцов`);
+    } else {
+      addLog(G, `Игрок ${player.name} расставляет силы...`);
+      autoPlaceAI(G, ctx, events);
+    }
   },
   moves: {
-    placeUnit: (G, ctx, { unitId, circleId, time }) => {
+    placeUnit: ({G, ctx}, { unitId, circleId }) => {
       const player = G.players?.[ctx?.currentPlayer];
+
       const unit = player?.fighters?.find(i => i.id === unitId);
       if (!unit) return INVALID_MOVE;
-
+      
       const points = getAvailablePoints(G, ctx, unitId);
       const isOccupied = G.players.some(p => p.fighters.some(f => f.position === circleId));
-
-      if (!isOccupied && points[unit.type]?.includes(circleId)) {
+      const unitType = unit.type.toLowerCase();
+      const isPointValid = points[unitType]?.includes(circleId);
+    
+      if (!isOccupied && isPointValid) {
         unit.position = circleId;
         unit.startPosition = circleId;
-        G.log.push({ msg: `${unit.name} выставлен на позицию ${circleId}`, type: 'info', time });
+        
+        addLog(G, `${unit.name} выставлен на позицию ${circleId}`);
 
         const isDone = player.fighters.every(f => f.position !== null);
         if (isDone && player.type === 'human') {
@@ -77,19 +74,19 @@ export const placementPhase = {
         return INVALID_MOVE;
       }
     },
-    finishUnitPlacement: (G, ctx, { time }) => {
+    finishUnitPlacement: ({G, ctx, events }) => {
       const player = G.players?.[ctx?.currentPlayer];
       G.pendingActions = [];
-      G.log.push({ msg: `Игрок ${player.name} завершил расстановку`, type: 'info', time });
+      addLog(G, `Игрок ${player.name} завершил расстановку`);
       G.pendingActions = [];
-      ctx.events.endTurn();
+      events.endTurn();
     },
   },
   endIf: G => G.players?.every(p => p.fighters.every(f => f.position !== null)),
   next: 'GAME_START',
 };
 
-const autoPlaceAI = (G, ctx, { time }) => {
+const autoPlaceAI = (G, ctx, events) => {
   const player = G.players[ctx.currentPlayer];
 
   const hero = player.fighters.find(f => f.type === 'hero');
@@ -109,6 +106,6 @@ const autoPlaceAI = (G, ctx, { time }) => {
     }
   });
 
-  G.log.push({ msg: `Игрок ${player.name} завершил расстановку`, type: 'info', time });
-  ctx.events.endTurn();
+  addLog(G, `Игрок ${player.name} завершил расстановку`);
+  events.endTurn();
 };

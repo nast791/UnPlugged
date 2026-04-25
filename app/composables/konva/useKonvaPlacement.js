@@ -4,7 +4,6 @@ const dropHandler = ref(null);
 
 export const useKonvaPlacement = () => {
   const { client, G, ctx } = useBoardgame();
-  const { getGameTime } = useUtils();
 
   const registerMap = (stageRef, nodes, nodeSize) => {
     if (!import.meta.client) return;
@@ -28,9 +27,8 @@ export const useKonvaPlacement = () => {
 
       if (closestNode) {
         client.value.moves.placeUnit({ 
-          fighterId: dragItem.id, 
-          circleId: closestNode.id,
-          time: getGameTime()
+          unitId: dragItem.id, 
+          circleId: Number(closestNode.id)
         });
       }
     };

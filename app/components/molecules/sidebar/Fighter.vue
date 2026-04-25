@@ -95,7 +95,7 @@ const isStacked = computed(() => group?.length > 1);
 
 const isDraggable = computed(() => {
   if (!ctx.value) return false;
-  const isMyTurn = ctx.value.currentPlayer === String(player.index - 1); 
+  const isMyTurn = ctx.value.currentPlayer === String(player.index - 1);
   const isPlacement = ctx.value.phase === 'UNIT_PLACEMENT';
   return isMyTurn && isPlacement;
 });

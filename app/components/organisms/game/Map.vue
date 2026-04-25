@@ -21,7 +21,6 @@
               :nodeSize="nodeSize"
               :is-highlighted="checkIfHighlighted(node.id)"
               :highlight-type="currentHighlightType"
-              @select="handleNodeClick"
             />
 
             <template v-for="player in playersData" :key="player.id">
@@ -34,7 +33,7 @@
                 :item="item"
                 v-model="highlightedCells"
                 v-for="item in player?.fighters"
-                :key="item.id"
+                :key="`${player.id}-${item.id}-${item.position}`"
               />
             </template>
           </v-layer>
@@ -85,7 +84,7 @@ const mapData = computed(() => G.value?.map);
 const playersData = computed(() => G.value?.players || []);
 const currentPhase = computed(() => ctx.value?.phase);
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
-const { getNodePosition, getGameTime } = useUtils();
+const { getNodePosition } = useUtils();
 
 const connections = computed(() => mapData.value?.connections || []);
 const nodes = computed(() => mapData.value?.circles || []);
@@ -144,18 +143,6 @@ const clearMap = () => {
   highlightedCells.value = [];
   if (client.value) {
     client.value.moves.resetAllFighters();
-  }
-};
-
-const handleNodeClick = (e, nodeId) => {
-  if (!client.value) return;
-
-  if (currentPhase.value === 'UNIT_PLACEMENT' && dragItem.value) {
-    client.value.moves.placeUnit({
-      fighterId: dragItem.value.id,
-      nodeId: nodeId,
-      time: getGameTime()
-    });
   }
 };
 

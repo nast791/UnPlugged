@@ -2,14 +2,16 @@ import { game } from '#shared/utils/game';
 import { Client } from 'boardgame.io/client';
 import { useGameStore } from '~/store/game.js';
 
+const sharedClient = shallowRef(null);
+const sharedG = ref(null);
+const sharedCtx = ref(null);
+
 export const useBoardgame = () => {
   const route = useRoute();
-  const client = shallowRef(null);
-  const G = ref(null);
-  const ctx = ref(null);
   const store = useGameStore();
 
-  onMounted(async() => {
+  onMounted(() => {
+    if (sharedClient.value) return;
     const setupData = JSON.parse(JSON.stringify(store.activeSetupData));
 
     if (!setupData || String(route.params.id) !== String(setupData.id)) {
@@ -20,29 +22,28 @@ export const useBoardgame = () => {
       });
     }
 
-    const playersCount = setupData.players?.length || 2;
-
     const gameClient = Client({
       game: {
         ...game,
         setup: ctx => game.setup(ctx, setupData),
       },
-      numPlayers: playersCount,
+      numPlayers: setupData.players?.length || 2,
       playerID: store.localPlayerId
     });
 
     gameClient.subscribe(state => {
-      if (state) {
-        G.value = state.G;
-        ctx.value = state.ctx;
-      }
+      if (!state) return;
+      sharedG.value = state.G;
+      sharedCtx.value = state.ctx;
     });
 
-    await nextTick();
     gameClient.start();
-
-    client.value = gameClient;
+    sharedClient.value = gameClient;
   });
 
-  return { client, G, ctx };
+  return { 
+    client: sharedClient, 
+    G: sharedG, 
+    ctx: sharedCtx 
+  };
 };

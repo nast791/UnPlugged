@@ -22,7 +22,7 @@
           >
             <span>[{{ item.time }}]</span>
             <div>
-              {{ item.message }}
+              {{ item.msg }}
             </div>
           </div>
         </div>
@@ -51,7 +51,6 @@ import { useBoardgame } from '~/composables/game/useBoardgame';
 import {useTurnStart} from '~/composables/phases/useTurnStart';
 
 const { client, G, ctx } = useBoardgame();
-const { getGameTime } = useUtils();
 const turnCount = computed(() => ctx.value?.turn || 0);
 const history = computed(() => G.value?.log || []);
 const actions = computed(() => G.value?.pendingActions || []);
@@ -75,7 +74,7 @@ const clickHandler = (actionItem) => {
 
   const moveName = actionItem.action;
   if (client.value.moves[moveName]) {
-    client.value.moves[moveName]({ time: getGameTime() });
+    client.value.moves[moveName]();
   }
 };
 

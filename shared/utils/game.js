@@ -11,9 +11,9 @@ export const game = {
       selectedCardId: null,
       bonusMovement: 0,
       bonusMovementCardId: null,
-      timer: 0, 
+      timer: 0,
       log: [],
-      pendingActions: [], 
+      pendingActions: []
     };
   },
   moves: {
@@ -25,13 +25,13 @@ export const game = {
       }
     },
     resetAllFighters: (G, ctx) => {
-      G.players[ctx.currentPlayer].fighters.forEach(f => f.active = false);
-    }
+      G.players[ctx.currentPlayer].fighters.forEach(f => (f.active = false));
+    },
   },
   phases: {
     UNIT_PLACEMENT: {
       ...placementPhase,
       start: true,
     },
-  }
+  },
 };
