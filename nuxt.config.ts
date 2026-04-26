@@ -101,4 +101,7 @@ export default defineNuxtConfig({
     payloadExtraction: true,
     typedPages: true,
   },
+  icon: {
+    serverBundle: 'remote',
+  },
 });

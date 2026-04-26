@@ -29,34 +29,43 @@ export const getAvailablePoints = (G, ctx, fighterId) => {
 };
 
 export const placementPhase = {
-  onBegin: ({G, ctx, events}) => {
-    if (!G?.players) return;
+  endIf: ({ G }) => G.players.every(p => p.fighters.every(f => f.position !== null)),
+  next: 'TURN_START',
+  turn: {
+    onBegin: ({ G, ctx, events }) => {
+      const player = G.players[ctx.currentPlayer];
 
-    const player = G?.players?.[ctx?.currentPlayer];
-    if (player.type === 'human') {
-      addLog(G, `Игрок ${player.name}: расставьте бойцов`);
-    } else {
-      addLog(G, `Игрок ${player.name} расставляет силы...`);
-      autoPlaceAI(G, ctx, events);
-    }
+      if (player.type === 'human') {
+        addLog(G, `Игрок ${player.name}: расставьте бойцов`);
+      } else {
+        addLog(G, `Игрок ${player.name} расставляет силы...`);
+        autoPlaceAI({ G, ctx, events });
+      }
+    },
+    onEnd: ({ G, events }) => {
+      const allPlaced = G.players.every(p => p.fighters.every(f => f.position !== null));
+
+      if (allPlaced) {
+        addLog(G, 'Все бойцы расставлены. Начинаем игру!');
+      }
+    },
   },
   moves: {
-    placeUnit: ({G, ctx}, { unitId, circleId }) => {
+    placeUnit: ({ G, ctx }, { unitId, circleId }) => {
       const player = G.players?.[ctx?.currentPlayer];
 
       const unit = player?.fighters?.find(i => i.id === unitId);
       if (!unit) return INVALID_MOVE;
-      
+
       const points = getAvailablePoints(G, ctx, unitId);
-      const isOccupied = G.players.some(p => p.fighters.some(f => f.position === circleId));
+      const isOccupied = G.players.some(p =>
+        p.fighters.some(f => f.position === circleId && f.id !== unitId),
+      );
       const unitType = unit.type.toLowerCase();
       const isPointValid = points[unitType]?.includes(circleId);
-    
+
       if (!isOccupied && isPointValid) {
-        unit.position = circleId;
-        unit.startPosition = circleId;
-        
-        addLog(G, `${unit.name} выставлен на позицию ${circleId}`);
+        setPosition(G, unit, circleId);
 
         const isDone = player.fighters.every(f => f.position !== null);
         if (isDone && player.type === 'human') {
@@ -74,7 +83,7 @@ export const placementPhase = {
         return INVALID_MOVE;
       }
     },
-    finishUnitPlacement: ({G, ctx, events }) => {
+    finishUnitPlacement: ({ G, ctx, events }) => {
       const player = G.players?.[ctx?.currentPlayer];
       G.pendingActions = [];
       addLog(G, `Игрок ${player.name} завершил расстановку`);
@@ -82,18 +91,21 @@ export const placementPhase = {
       events.endTurn();
     },
   },
-  endIf: G => G.players?.every(p => p.fighters.every(f => f.position !== null)),
-  next: 'GAME_START',
 };
 
-const autoPlaceAI = (G, ctx, events) => {
+const setPosition = (G, unit, circleId) => {
+  unit.position = circleId;
+  unit.startPosition = circleId;
+  addLog(G, `${unit.name} выставлен на позицию ${circleId}`);
+};
+
+const autoPlaceAI = ({ G, ctx, events }) => {
   const player = G.players[ctx.currentPlayer];
 
   const hero = player.fighters.find(f => f.type === 'hero');
   const heroPoints = getAvailablePoints(G, ctx, hero.id).hero;
   if (hero && heroPoints.length > 0) {
-    hero.position = heroPoints[0];
-    hero.startPosition = heroPoints[0];
+    setPosition(G, hero, heroPoints[0]);
   }
 
   const assistants = player.fighters.filter(f => f.type === 'assistant');
@@ -101,8 +113,7 @@ const autoPlaceAI = (G, ctx, events) => {
     const points = getAvailablePoints(G, ctx, assistant.id).assistant;
     if (points.length > 0) {
       const randomPoint = points[Math.floor(Math.random() * points.length)];
-      assistant.position = randomPoint;
-      assistant.startPosition = randomPoint;
+      setPosition(G, assistant, randomPoint);
     }
   });
 
