@@ -28,7 +28,7 @@ export const useBoardgame = () => {
         setup: ctx => game.setup(ctx, setupData),
       },
       numPlayers: setupData.players?.length || 2,
-      playerID: store.localPlayerId
+      playerID: store.localPlayerId,
     });
 
     gameClient.subscribe(state => {
@@ -41,9 +41,18 @@ export const useBoardgame = () => {
     sharedClient.value = gameClient;
   });
 
-  return { 
-    client: sharedClient, 
-    G: sharedG, 
-    ctx: sharedCtx 
+  const activePlayer = computed(() => {
+    const G = sharedG.value;
+    const ctx = sharedCtx.value;
+    if (!G || !ctx) return null;
+    
+    return G.players[ctx.currentPlayer];
+  });
+
+  return {
+    client: sharedClient,
+    G: sharedG,
+    ctx: sharedCtx,
+    activePlayer
   };
 };

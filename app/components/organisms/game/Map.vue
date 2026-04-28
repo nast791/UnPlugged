@@ -66,7 +66,7 @@ import useKonvaCamera from '~/composables/konva/useKonvaCamera';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
 import { useBoardgame } from '~/composables/game/useBoardgame';
-import { getAvailablePoints } from '#shared/utils/phases/placement';
+import { getAvailablePoints } from '#shared/utils/actions/placement';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -149,7 +149,7 @@ const clearMap = () => {
 const checkIfHighlighted = nodeId => {
   const id = String(nodeId);
   if (currentPhase.value === 'UNIT_PLACEMENT' && dragItem.value) {
-    const points = getAvailablePoints(G.value, ctx.value, dragItem.value.id);
+    const points = getAvailablePoints({G: G.value, ctx: ctx.value, fighterId: dragItem.value.id});
     const type = dragItem.value.type;
     return points[type]?.map(String).includes(id);
   }

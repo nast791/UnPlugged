@@ -48,14 +48,12 @@
 <script setup>
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
 import { useBoardgame } from '~/composables/game/useBoardgame';
-import {useTurnStart} from '~/composables/phases/useTurnStart';
 
 const { client, G, ctx } = useBoardgame();
-const turnCount = computed(() => ctx.value?.turn || 0);
+const turnCount = computed(() => G.value?.turn || 0);
 const history = computed(() => G.value?.log || []);
 const actions = computed(() => G.value?.pendingActions || []);
 
-const { formattedTime } = useTurnStart();
 const scrollAreaRef = ref(null);
 
 const isMyTurn = computed(() => {
@@ -86,4 +84,30 @@ watch(
   },
   { deep: true },
 );
+
+const timer = ref(0);
+let interval = null;
+
+const formattedTime = computed(() => {
+  const hours = Math.floor(timer.value / 3600);
+  const minutes = Math.floor((timer.value % 3600) / 60);
+  const seconds = timer.value % 60;
+
+  return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
+});
+
+const startGlobalTimer = () => {
+  if (interval) return;
+  interval = setInterval(() => {
+    timer.value++;
+  }, 1000);
+};
+
+watch(() => ctx.value?.phase, (newPhase) => {
+  if (!timer.value && newPhase === 'TURN_START') {
+    startGlobalTimer();
+  }
+}, { immediate: true });
+
+onUnmounted(() => clearInterval(interval));
 </script>

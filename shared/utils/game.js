@@ -1,4 +1,6 @@
 import { placementPhase } from './phases/placement';
+import { turnStart } from './phases/turnstart';
+import { actionSelection } from './phases/actionselection';
 import { moves } from '#shared/utils/moves';
 
 export const game = {
@@ -12,9 +14,10 @@ export const game = {
       selectedCardId: null,
       bonusMovement: 0,
       bonusMovementCardId: null,
-      timer: 0,
+      turn: 0,
       log: [],
-      pendingActions: []
+      pendingActions: [],
+      isPhaseEnd: false,
     };
   },
   moves: {
@@ -29,8 +32,15 @@ export const game = {
       start: true,
     },
     TURN_START: {
+      ...turnStart,
       moves: {
-        ...moves
+        ...turnStart.moves, ...moves
+      },
+    },
+    ACTION_SELECTION: {
+      ...actionSelection,
+      moves: {
+        ...actionSelection.moves, ...moves
       },
     }
   },
