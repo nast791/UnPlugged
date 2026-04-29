@@ -5,27 +5,20 @@ import { useGameStore } from '~/store/game.js';
 const sharedClient = shallowRef(null);
 const sharedG = ref(null);
 const sharedCtx = ref(null);
+const isInitialized = ref(false);
 
 export const useBoardgame = () => {
-  const route = useRoute();
   const store = useGameStore();
 
-  onMounted(() => {
-    if (sharedClient.value) return;
+  const initClient = () => {
+    if (isInitialized.value) return;
+
     const setupData = JSON.parse(JSON.stringify(store.activeSetupData));
-
-    if (!setupData || String(route.params.id) !== String(setupData.id)) {
-      throw createError({
-        statusCode: 404,
-        message: 'Игра не найдена или сессия истекла',
-        fatal: true,
-      });
-    }
-
+    
     const gameClient = Client({
       game: {
         ...game,
-        setup: ctx => game.setup(ctx, setupData),
+        setup: (ctx) => game.setup(ctx, setupData),
       },
       numPlayers: setupData.players?.length || 2,
       playerID: store.localPlayerId,
@@ -34,25 +27,27 @@ export const useBoardgame = () => {
     gameClient.subscribe(state => {
       if (!state) return;
       sharedG.value = state.G;
-      sharedCtx.value = state.ctx;
+      sharedCtx.value = state.ctx;   
     });
 
     gameClient.start();
     sharedClient.value = gameClient;
-  });
+    isInitialized.value = true;
+  };
+
+  if (import.meta.client) {
+    initClient();
+  }
 
   const activePlayer = computed(() => {
-    const G = sharedG.value;
-    const ctx = sharedCtx.value;
-    if (!G || !ctx) return null;
-    
-    return G.players[ctx.currentPlayer];
+    if (!sharedG.value || !sharedCtx.value) return null;
+    return sharedG.value.players[sharedCtx.value.currentPlayer];
   });
 
-  return {
-    client: sharedClient,
-    G: sharedG,
-    ctx: sharedCtx,
-    activePlayer
+  return { 
+    client: sharedClient, 
+    G: sharedG, 
+    ctx: sharedCtx, 
+    activePlayer 
   };
 };

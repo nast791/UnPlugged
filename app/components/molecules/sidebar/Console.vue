@@ -27,10 +27,7 @@
           </div>
         </div>
 
-        <div
-          v-if="showActions"
-          class="mt-3 flex flex-wrap gap-6"
-        >
+        <div v-if="showActions" class="mt-3 flex flex-wrap gap-6">
           <template v-for="it in actions" :key="it.text">
             <button
               :disabled="it.disabled"
@@ -49,7 +46,7 @@
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
 import { useBoardgame } from '~/composables/game/useBoardgame';
 
-const { client, G, ctx } = useBoardgame();
+const { client, G, ctx, activePlayer } = useBoardgame();
 const turnCount = computed(() => G.value?.turn || 0);
 const history = computed(() => G.value?.log || []);
 const actions = computed(() => G.value?.pendingActions || []);
@@ -57,22 +54,24 @@ const actions = computed(() => G.value?.pendingActions || []);
 const scrollAreaRef = ref(null);
 
 const isMyTurn = computed(() => {
-  return ctx.value?.currentPlayer === client.value?.playerID;
+  if (!(ctx.value || client.value)) return;
+  return String(ctx.value.currentPlayer) === String(client.value.playerID);
 });
 
-const isHuman = computed(() => {
-  const activeId = ctx.value?.currentPlayer;
-  return G.value?.players[activeId]?.type === 'human';
-});
+const isHuman = computed(() => activePlayer.value?.type === 'human');
 
-const showActions = computed(() => isMyTurn.value && isHuman.value && G.value?.pendingActions?.length > 0);
+const showActions = computed(
+  () => !!(isMyTurn.value && isHuman.value && G.value?.pendingActions?.length),
+);
 
-const clickHandler = (actionItem) => {
+const clickHandler = actionItem => {
   if (!client.value) return;
 
   const moveName = actionItem.action;
   if (client.value.moves[moveName]) {
-    client.value.moves[moveName]();
+    actionItem.payload
+      ? client.value.moves[moveName](actionItem.payload)
+      : client.value.moves[moveName]();
   }
 };
 
@@ -103,11 +102,15 @@ const startGlobalTimer = () => {
   }, 1000);
 };
 
-watch(() => ctx.value?.phase, (newPhase) => {
-  if (!timer.value && newPhase === 'TURN_START') {
-    startGlobalTimer();
-  }
-}, { immediate: true });
+watch(
+  () => ctx.value?.phase,
+  newPhase => {
+    if (!timer.value && (newPhase === 'TURN_START' || newPhase === 'ACTION_SELECTION')) {
+      startGlobalTimer();
+    }
+  },
+  { immediate: true },
+);
 
 onUnmounted(() => clearInterval(interval));
 </script>

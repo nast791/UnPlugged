@@ -81,6 +81,8 @@
 
 <script setup>
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
+import { useBoardgame } from '~/composables/game/useBoardgame';
+import { getAvailableCells } from '#shared/utils/actions/movement';
 
 defineOptions({
   inheritAttrs: false,
@@ -100,6 +102,7 @@ const { loadAsset } = useKonvaLoader();
 const heroImg = ref(null);
 const imageNode = ref(null);
 const emit = defineEmits(['click']);
+const { client, G, ctx, activePlayer } = useBoardgame();
 
 const isHovered = ref(false);
 
@@ -149,11 +152,30 @@ const initFighter = async () => {
   }
 };
 
-const { $handleFighterClick } = useNuxtApp();
-
 const onFighterSelect = () => {
-  const result = $handleFighterClick(item);
-  model.value = result || [];
+  setActiveItem();
+  if (G.value.phase === 'MOVEMENT') {
+    const result = getAvailableCells({ G: G.value, ctx: ctx.value, fighterId: item.id });
+    console.log(result);
+
+    model.value = result || [];
+  }
+};
+
+const isMyFighter = computed(() => {
+  if (!activePlayer.value) return;
+  return activePlayer.value.fighters.find(i => i.id === item.id);
+});
+
+const setActiveItem = () => {
+  if (!isMyFighter.value) return;
+
+  if (item.active) {
+    client.value.moves.resetAllFighters();
+  } else {
+    client.value.moves.resetAllFighters();
+    client.value.moves.setFighterActive({ fighterId: item.id, active: true });
+  }
 };
 
 onMounted(initFighter);

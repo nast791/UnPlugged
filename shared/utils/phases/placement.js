@@ -2,17 +2,14 @@ import { activePlayer, addLog } from '#shared/utils/actions/utils';
 import { placeUnit, finishUnitPlacement, autoPlaceAI } from '#shared/utils/actions/placement';
 
 export const placementPhase = {
-  endIf: ({ G }) => G.isPhaseEnd,
-  next: 'TURN_START',
   onEnd: ({ G, events }) => {
     addLog(G, 'Все бойцы расставлены. Начинаем игру!');
-    G.isPhaseEnd = false;
   },
   turn: {
     onBegin: ({ G, ctx, events }) => {
       const allPlaced = G.players.every(p => p.fighters.every(f => f.position !== null));
       if (allPlaced) {
-        G.isPhaseEnd = true;
+        events.setPhase('TURN_START');
         return;
       }
 

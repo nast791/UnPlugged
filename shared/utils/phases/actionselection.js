@@ -1,18 +1,19 @@
-import { activePlayer, addLog } from "#shared/utils/actions/utils";
+import { activePlayer, addLog } from '#shared/utils/actions/utils';
+import { updateAvailableActions, selectAction } from '#shared/utils/actions/actionselection';
 
 export const actionSelection = {
-  // endIf: ({ G }) => G.isPhaseEnd,
-  // next: 'ACTION_SELECTION',
-  onBegin: ({ G, ctx, events }) => {
-    const player = G.players[ctx.currentPlayer];
-    console.log(ctx.currentPlayer);
-    
-
-    G.isPhaseEnd = true;
-
+  onBegin: ({ G, ctx }) => {
+    G.selectedAction = null;
+    updateAvailableActions({ G, ctx });
   },
-  onEnd: ({ G, ctx, events }) => {
-
-    G.isPhaseEnd = false;
+  moves: {
+    selectAction: ({ G, ctx, events }, actionId) => {
+      return selectAction({ G, ctx, events }, actionId);
+    },
+  },
+  turn: {
+    onEnd: ({ G }) => {
+      G.pendingActions = [];
+    },
   },
 };

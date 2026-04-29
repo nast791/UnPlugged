@@ -1,7 +1,25 @@
 import { placementPhase } from './phases/placement';
 import { turnStart } from './phases/turnstart';
 import { actionSelection } from './phases/actionselection';
-import { moves } from '#shared/utils/moves';
+import { movement } from './phases/movement';
+import { attack } from './phases/attack';
+import { effect } from './phases/effect';
+import { turnEnd } from './phases/turnend';
+import { setFighterActive, resetAllFighters } from '#shared/utils/actions/utils';
+import { TurnOrder } from 'boardgame.io/core';
+
+const createPhase = (config) => ({
+  ...config,
+  turn: {
+    order: TurnOrder.CONTINUE, 
+    ...(config.turn || {})
+  },
+  moves: {
+    setFighterActive,
+    resetAllFighters,
+    ...(config.moves || {})
+  }
+});
 
 export const game = {
   setup: (ctx, setupData) => {
@@ -12,36 +30,29 @@ export const game = {
       selectedAction: null,
       selectedUnitId: null,
       selectedCardId: null,
-      bonusMovement: 0,
-      bonusMovementCardId: null,
+      bonusValue: 0,
+      bonusCardId: null,
       turn: 0,
       log: [],
       pendingActions: [],
-      isPhaseEnd: false,
+      winner: false
     };
   },
-  moves: {
-    ...moves,
+  endIf: ({ G, ctx }) => {
+    if (G.winner) {
+      return { winner: G.winner };
+    }
   },
   phases: {
     UNIT_PLACEMENT: {
-      ...placementPhase,
-      moves: {
-        ...placementPhase.moves, ...moves
-      },
+      ...createPhase(placementPhase),
       start: true,
     },
-    TURN_START: {
-      ...turnStart,
-      moves: {
-        ...turnStart.moves, ...moves
-      },
-    },
-    ACTION_SELECTION: {
-      ...actionSelection,
-      moves: {
-        ...actionSelection.moves, ...moves
-      },
-    }
+    TURN_START: createPhase(turnStart),
+    ACTION_SELECTION: createPhase(actionSelection),
+    MOVEMENT: createPhase(movement),
+    ATTACK: createPhase(attack),
+    EFFECT: createPhase(effect),
+    TURN_END: createPhase(turnEnd),
   },
 };

@@ -90,14 +90,22 @@ const { group, item, player } = defineProps({
   group: { type: Array, default: () => [] },
 });
 
-const { client, G, ctx } = useBoardgame();
+const { client, G, ctx, activePlayer } = useBoardgame();
 const isStacked = computed(() => group?.length > 1);
+const isMyTurn = computed(() => {
+  if (!(ctx.value || client.value)) return;
+  return String(ctx.value.currentPlayer) === String(client.value.playerID);
+});
+
+const isMyFighter = computed(() => {
+  if (!activePlayer.value) return;
+  return String(activePlayer.value.id) === String(player.id);
+});
 
 const isDraggable = computed(() => {
   if (!ctx.value) return false;
-  const isMyTurn = ctx.value.currentPlayer === String(player.index - 1);
   const isPlacement = ctx.value.phase === 'UNIT_PLACEMENT';
-  return isMyTurn && isPlacement;
+  return isMyTurn.value && isMyFighter.value && isPlacement;
 });
 
 const index = computed(() => group.findIndex(i => i.id === item.id));
@@ -114,7 +122,7 @@ const rangeType = computed(() => {
 });
 
 const setActiveItem = () => {
-  if (ctx.value.currentPlayer !== String(player.index - 1)) return;
+  if (!isMyFighter.value) return;
 
   if (item.active) {
     client.value.moves.resetAllFighters();
