@@ -8,6 +8,7 @@
 
 <script setup>
 import { useAppStore } from '~/store/app.js';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 defineOptions({
   inheritAttrs: false,
@@ -17,12 +18,11 @@ const props = defineProps({
   node: { type: Object, required: true },
   nodeSize: { type: Number, default: 40 },
   isHighlighted: { type: Boolean, default: false },
-  highlightType: { type: Number, default: 0 } 
+  highlightType: { type: Number, default: 0 },
 });
 
 const emit = defineEmits(['select']);
 const appStore = useAppStore();
-const { $handleNodeClick } = useNuxtApp();
 
 const isHovered = ref(false);
 
@@ -75,10 +75,16 @@ const highlightConfig = computed(() => ({
   listening: false,
 }));
 
+const { client, activePlayer } = useBoardgame();
+
 const handlePointerClick = e => {
   if (e.cancelBubble !== undefined) e.cancelBubble = true;
-  if (activeStatus.value) {
-    $handleNodeClick(props.node.id);
+  if (!activeStatus.value) return;
+  const activeFighter = activePlayer.value?.fighters?.find(i => i.active);
+  if (!activeFighter) return;
+  if (client.value?.moves?.moveFighter) {
+    const activeFighter = activePlayer.value?.fighters?.find(i => i.active);
+    client.value?.moves?.moveFighter({ fighterId: activeFighter.id, targetId: props.node.id });
   }
   emit('select', e, props.node.id);
 };

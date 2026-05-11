@@ -1,5 +1,5 @@
 import { activePlayer, addLog, drawCards } from "#shared/utils/actions/utils";
-import {applyBonus, moveFighter, resetPositions, updateMovementUI, confirmMovement, cancelBonus} from '#shared/utils/actions/movement';
+import {applyBonus, moveFighter, resetPositions, updateMovementUI, confirmMovement, cancelBonus, getAvailableCells} from '#shared/utils/actions/movement';
 
 export const movement = {
   onBegin: ({ G, ctx }) => {
@@ -11,6 +11,9 @@ export const movement = {
     updateMovementUI({G, ctx});
   },
   moves: {
+    getAvailableCells: ({ G, ctx }, { fighterId }) => {
+      return getAvailableCells({ G, ctx, fighterId });
+    },
     applyBonus: ({ G, ctx }, cardId) => {
       return applyBonus({ G, ctx, cardId });
     },

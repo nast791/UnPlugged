@@ -82,7 +82,6 @@
 <script setup>
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
 import { useBoardgame } from '~/composables/game/useBoardgame';
-import { getAvailableCells } from '#shared/utils/actions/movement';
 
 defineOptions({
   inheritAttrs: false,
@@ -154,11 +153,11 @@ const initFighter = async () => {
 
 const onFighterSelect = () => {
   setActiveItem();
-  if (G.value.phase === 'MOVEMENT') {
-    const result = getAvailableCells({ G: G.value, ctx: ctx.value, fighterId: item.id });
-    console.log(result);
 
+  if (client.value?.moves?.getAvailableCells) {
+    const result = client.value.moves.getAvailableCells({ fighterId: item.id });
     model.value = result || [];
+    console.log(result);
   }
 };
 

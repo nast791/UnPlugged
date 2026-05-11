@@ -21,6 +21,7 @@
               :nodeSize="nodeSize"
               :is-highlighted="checkIfHighlighted(node.id)"
               :highlight-type="currentHighlightType"
+              @select="clearMap"
             />
 
             <template v-for="player in playersData" :key="player.id">
