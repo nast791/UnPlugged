@@ -3,7 +3,6 @@
     <Html
       lang="ru"
       class="overflow-x-hidden scroll-smooth max-h-dvh"
-      :class="[stopScrollingPage && 'overflow-y-hidden!']"
     />
     <Head>
       <Title>{{ route.meta?.seo?.title }}</Title>
@@ -19,20 +18,23 @@
 </template>
 <script setup>
 import { useAppStore } from '~/store/app.js';
-import useSetup from '~/composables/game/useSetup';
-import useInitializer from '~/composables/game/useInitializer';
-import usePlacementManager from '~/composables/game/usePlacementManager';
-import { useGameStore } from '~/store/game';
+import { useGlossary } from '~/composables/api/glossary';
+import { useGamePhases } from '~/composables/phases';
 
 const route = useRoute();
-const { stopScrollingPage } = storeToRefs(useAppStore());
+const { data } = useGlossary();
+const { glossary } = storeToRefs(useAppStore());
+const allActions = useGamePhases();
 
-const { setupNewGame } = useSetup();
-const { runInit } = useInitializer();
-const { startPlacement } = usePlacementManager();
 const { $registerActions } = useNuxtApp();
 
+watch(data, (newData) => {
+  if (newData) {
+    glossary.value = newData;
+  }
+}, { immediate: true })
+
 onMounted(() => {
-  $registerActions({ setupNewGame, runInit, startPlacement });
+  $registerActions(allActions);
 });
 </script>

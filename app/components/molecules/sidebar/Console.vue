@@ -2,11 +2,11 @@
   <div class="flex flex-col h-300 bg-[#282934]/50 border-t border-slate-700/50 select-none">
     <div
       class="flex items-center justify-between px-16 py-8 border-b border-slate-700/30 bg-slate-900/40 text-14 font-bold uppercase tracking-wide"
-      v-if="turn"
+      v-if="turnCount"
     >
       <div class="flex items-center gap-4">
         <span class="text-slate-500">Ход:</span>
-        <span class="text-white">{{ turn }}</span>
+        <span class="text-white">{{ turnCount }}</span>
       </div>
       <div class="flex items-center text-cyan-400">
         {{ formattedTime }}
@@ -22,21 +22,21 @@
           >
             <span>[{{ item.time }}]</span>
             <div>
-              {{ item.message }}
+              {{ item.msg }}
             </div>
           </div>
+        </div>
 
-          <div v-if="item?.options?.length" class="mt-3 ml-5 flex flex-wrap gap-2">
-            <template v-for="it in item.options" :key="it.text">
-              <button
-                @click="it.action(it)"
-                class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-800 border border-slate-700 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 hover:border-cyan-400 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
-                v-if="!it?.clicked"
-              >
-                {{ it.text }}
-              </button>
-            </template>
-          </div>
+        <div v-if="showActions" class="mt-3 flex flex-wrap gap-6">
+          <template v-for="it in actions" :key="it.text">
+            <button
+              :disabled="it.disabled"
+              @click="clickHandler(it)"
+              class="px-12 py-6 text-16 font-bold uppercase tracking-tighter bg-slate-500/30 border border-slate-700 text-cyan-500 hover:bg-fuchsia-400 hover:text-slate-950 hover:border-fuchsia-500 active:scale-95 transition-all duration-200 rounded-sm shadow-sm cursor-pointer"
+            >
+              {{ it.text }}
+            </button>
+          </template>
         </div>
       </div>
     </ScrollArea>
@@ -44,12 +44,36 @@
 </template>
 <script setup>
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
-import { useGameStore } from '~/store/game.js';
-import usePlacementManager from '~/composables/game/usePlacementManager';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
-const { history, turn } = storeToRefs(useGameStore());
-const { formattedTime } = usePlacementManager();
+const { client, G, ctx, activePlayer } = useBoardgame();
+const turnCount = computed(() => G.value?.turn || 0);
+const history = computed(() => G.value?.log || []);
+const actions = computed(() => G.value?.pendingActions || []);
+
 const scrollAreaRef = ref(null);
+
+const isMyTurn = computed(() => {
+  if (!(ctx.value || client.value)) return;
+  return String(ctx.value.currentPlayer) === String(client.value.playerID);
+});
+
+const isHuman = computed(() => activePlayer.value?.type === 'human');
+
+const showActions = computed(
+  () => !!(isMyTurn.value && isHuman.value && G.value?.pendingActions?.length),
+);
+
+const clickHandler = actionItem => {
+  if (!client.value) return;
+
+  const moveName = actionItem.action;
+  if (client.value.moves[moveName]) {
+    actionItem.payload
+      ? client.value.moves[moveName](actionItem.payload)
+      : client.value.moves[moveName]();
+  }
+};
 
 watch(
   () => history.value.length,
@@ -59,4 +83,34 @@ watch(
   },
   { deep: true },
 );
+
+const timer = ref(0);
+let interval = null;
+
+const formattedTime = computed(() => {
+  const hours = Math.floor(timer.value / 3600);
+  const minutes = Math.floor((timer.value % 3600) / 60);
+  const seconds = timer.value % 60;
+
+  return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
+});
+
+const startGlobalTimer = () => {
+  if (interval) return;
+  interval = setInterval(() => {
+    timer.value++;
+  }, 1000);
+};
+
+watch(
+  () => ctx.value?.phase,
+  newPhase => {
+    if (!timer.value && (newPhase === 'TURN_START' || newPhase === 'ACTION_SELECTION')) {
+      startGlobalTimer();
+    }
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => clearInterval(interval));
 </script>

@@ -24,14 +24,17 @@
 
     <div class="flex items-center gap-12">
       <!-- Действия -->
-      <div v-if="isTurn && isGameStarted" class="flex items-center gap-4 text-slate-500 text-14">
+      <div
+        v-if="isTurn && +activePlayer.actionsPoints"
+        class="flex items-center gap-4 text-slate-500 text-14"
+      >
         <div
-          v-for="i in +item.actionsPoints - +item.actionsUsed"
+          v-for="i in +activePlayer.actionsPoints - +activePlayer.actionsUsed"
           :key="i"
-          class="flex items-center gap-6 size-12 rounded-full transition-all shadow-inner bg-amber-400 shadow-amber-500/50"
+          class="flex items-center gap-6 size-12 rounded-full transition-all shadow-inner bg-cyan-400 shadow-amber-500/50"
         />
         <div>/</div>
-        <div>{{ item.actionsPoints }}</div>
+        <div>{{ activePlayer.actionsPoints }}</div>
       </div>
       <button class="text-slate-500 hover:text-white transition-colors cursor-pointer">
         <div
@@ -44,17 +47,20 @@
   </div>
 </template>
 <script setup>
-import { useGameStore } from '~/store/game.js';
 import useUtils from '~/composables/useUtils';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
-const { item } = defineProps({
+const { item, num } = defineProps({
   item: { type: Object, default: null },
   num: { type: Number },
 });
 
-const { activePlayerIndex, isGameStarted } = storeToRefs(useGameStore());
-const role = computed(() => (item.type === 'ai' ? 'ИИ' : 'Вы'));
-const isTurn = computed(() => +activePlayerIndex.value === +item.index);
+const { client, G, ctx, activePlayer } = useBoardgame();
+const role = computed(() => {
+  if (item.type === 'ai') return 'ИИ';
+  return String(num) === client.value?.playerID ? 'Вы' : 'Оппонент';
+});
+const isTurn = computed(() => activePlayer.value?.id === item.id);
 
 const { getContrastColor } = useUtils();
 </script>

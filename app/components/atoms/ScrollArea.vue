@@ -11,7 +11,7 @@
       v-if="dir.includes('y')"
     >
       <ScrollAreaThumb
-        class="flex-1 bg-slate-700 rounded-full relative transition-colors hover:bg-slate-500/80 cursor-pointer"
+        class="bg-slate-700 rounded-full relative transition-colors hover:bg-slate-500/80 cursor-pointer"
       />
     </ScrollAreaScrollbar>
 
@@ -21,7 +21,9 @@
       orientation="horizontal"
       v-if="dir.includes('x')"
     >
-      <ScrollAreaThumb class="flex-1 bg-slate-700 rounded-full relative" />
+      <ScrollAreaThumb
+        class="bg-slate-700 rounded-full relative transition-colors hover:bg-slate-500/80 cursor-pointer"
+      />
     </ScrollAreaScrollbar>
 
     <ScrollAreaCorner class="bg-black/20" />
@@ -32,7 +34,7 @@
 const rootRef = ref(null);
 
 defineProps({
-  dir: { Array, default: ['y'] }
+  dir: { Array, default: ['y'] },
 });
 
 const scrollToBottom = () => {

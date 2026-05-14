@@ -4,13 +4,13 @@
 
     <div class="flex flex-col gap-8">
       <div class="flex gap-16 items-center" v-for="(item, index) in counter" :key="item">
-        <div class="text-white min-w-10" v-if="players?.length">
+        <div class="text-white min-w-10" v-if="selectedPlayers?.length">
           {{ index + 1 }}
         </div>
 
         <Select
           class="flex-1"
-          :modelValue="players[index]?.id"
+          :modelValue="selectedPlayers[index]?.id"
           placeholder="Выберите героя"
           :options="listHeroes"
           @update:modelValue="addPlayer($event, index)"
@@ -18,12 +18,12 @@
           <template #header>
             <Switch
               class="w-full"
-              :modelValue="players[index]?.type"
-              :trueValue="{ id: 'player', name: 'Игрок' }"
-              :falseValue="{ id: 'ai', name: 'ИИ' }"
+              v-model="selectedPlayers[index].type"
+              :trueValue="human"
+              :falseValue="ai"
               @click.stop
               @pointerdown.stop
-              v-if="players[index]?.type"
+              v-if="selectedPlayers[index]?.type"
             />
           </template>
           <template #option="{ item, selected, active }">
@@ -40,15 +40,15 @@
           </template>
         </Select>
 
-        <Controls 
-          :show-plus="players?.length === counter && players.length < MAX && hasHeroes"
-          :show-minus="players.length > 0"
+        <Controls
+          :show-plus="selectedPlayers?.length === counter && selectedPlayers.length < MAX && hasHeroes"
+          :show-minus="selectedPlayers.length > 0"
           @add="addRow"
           @remove="removeRow(index)"
-          v-if="players?.length > 0"
+          v-if="selectedPlayers?.length > 0"
         />
 
-        <ColorPicker v-model="players[index].color" v-if="players[index]?.color"/>
+        <ColorPicker v-model="selectedPlayers[index].color" v-if="selectedPlayers[index]?.color" />
       </div>
     </div>
   </div>
@@ -59,6 +59,7 @@ import ColorPicker from '~/components/atoms/ColorPicker.vue';
 import Switch from '~/components/atoms/Switch.vue';
 import Controls from '~/components/molecules/settings/Controls.vue';
 import { useGameStore } from '~/store/game.js';
+import { useAppStore } from '~/store/app';
 import useUtils from '~/composables/useUtils';
 import Select from '~/components/atoms/Select.vue';
 
@@ -66,31 +67,38 @@ const { heroes } = defineProps({
   heroes: Array,
 });
 
-const MAX = 4;
+const MAX = 2;
 
-const { players } = storeToRefs(useGameStore());
+const { glossary } = storeToRefs(useAppStore());
+const { selectedPlayers, localPlayerId } = storeToRefs(useGameStore());
 const { cloneDeep } = useUtils();
 
 const listHeroes = computed(
   () =>
     cloneDeep(heroes)?.map(i => {
-      i.disabled = !!players.value?.find(p => p.id === i.id);
+      i.disabled = !!selectedPlayers.value?.find(p => p.id === i.id);
       return i;
     }) || [],
 );
 
 const hasHeroes = computed(() => listHeroes.value?.filter(i => !i.disabled).length > 0);
+const human = computed(() => glossary.value?.meta?.players?.[0]);
+const ai = computed(() => glossary.value?.meta?.players?.[1]);
 
 const addPlayer = (id, index) => {
   const item = heroes.find(i => i.id === id);
   const player = cloneDeep(item);
   delete player.disabled;
-  player.type = !players.value?.length ? 'player' : 'ai';
+  player.type = !selectedPlayers.value?.length || !selectedPlayers.value?.find(i => i.type === human.value?.id) ? human.value?.id : ai.value?.id;
   player.index = index + 1;
-  if (players.value[index]) {
-    players.value[index] = player;
+  if (selectedPlayers.value[index]) {
+    selectedPlayers.value[index] = player;
   } else {
-    players.value.push(player);
+    selectedPlayers.value.push(player);
+  }
+  const humanIndex = selectedPlayers.value.findIndex(p => p.type === human.value?.id);
+  if (humanIndex !== -1) {
+    localPlayerId.value = String(humanIndex);
   }
 };
 
@@ -102,9 +110,22 @@ const addRow = () => {
 };
 
 const removeRow = index => {
-  players.value?.splice(index, 1);
+  selectedPlayers.value?.splice(index, 1);
   if (counter.value > 1) {
     counter.value--;
   }
+  const humanIndex = selectedPlayers.value.findIndex(p => p.type === human.value?.id);
+  localPlayerId.value = humanIndex !== -1 ? String(humanIndex) : "0";
 };
+
+watch(
+  () => selectedPlayers.value.map(p => p.type),
+  (newTypes) => {
+    const humanIndex = newTypes.findIndex(t => t === human.value?.id);
+    if (humanIndex !== -1) {
+      localPlayerId.value = String(humanIndex);
+    }
+  },
+  { deep: true }
+);
 </script>

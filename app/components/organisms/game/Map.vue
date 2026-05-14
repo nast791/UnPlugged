@@ -1,43 +1,56 @@
 <template>
-  <section ref="mapContainer" class="relative overflow-hidden min-h-0 min-w-0">
+  <section ref="mapContainer" class="relative overflow-hidden min-h-0 min-w-0 z-1">
     <ClientOnly>
-      <div @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDropOnCanvas" v-if="map">
-        <v-stage ref="stageRef" :config="stageConfig" @wheel="handleWheel">
+      <div v-if="G">
+        <v-stage
+          ref="stageRef"
+          :config="stageConfig"
+          @wheel="handleWheel"
+          @mousedown="handleStageClick"
+          @touchstart="handleStageClick"
+        >
           <v-layer>
-            <!-- 1. ФОН -->
-            <MapBackground :imageUrl="map.image" @loaded="onMapLoaded" />
+            <MapBackground :imageUrl="mapData.image" @loaded="onMapLoaded" />
 
-            <!-- 2. ЛИНИИ (под нодами) -->
             <MapLines :lines="connections" />
 
-            <!-- 3. НОДЫ -->
             <MapNode
               v-for="node in nodes"
               :key="node.id"
               :node="node"
               :nodeSize="nodeSize"
-              :scale="currentScale"
-              :isDraggingOverCanvas="isDraggingOverCanvas"
-              :dragFighter="dragFighter"
-              @select="handleNodeClick"
+              @select="clearMap"
             />
 
-            <!-- 4. ГЕРОИ -->
-            <template v-for="hero in players" :key="hero.id">
-              <MapHero
+            <template v-for="player in playersData" :key="player.id">
+              <MapFighter
                 :position="getNodePosition(item.position, nodes)"
                 :imageUrl="item.image"
                 :nodeSize="nodeSize"
                 :scale="currentScale"
-                :color="hero.color"
-                :id="item.id"
-                v-for="item in hero?.fighters"
-                :key="item.id"
+                :color="player.color"
+                :item="item"
+                v-for="item in player?.fighters"
+                :key="`${player.id}-${item.id}-${item.position}`"
               />
             </template>
           </v-layer>
         </v-stage>
       </div>
+
+      <Teleport to="body">
+        <div
+          v-if="dragItem"
+          class="pointer-events-none fixed z-999 opacity-70"
+          :style="{
+            left: mousePos.x + 'px',
+            top: mousePos.y + 'px',
+            transform: 'translate(-50%, -50%)',
+          }"
+        >
+          <img :src="dragItem.image" class="w-64 h-64 border-2 border-white rounded-full" />
+        </div>
+      </Teleport>
     </ClientOnly>
   </section>
 </template>
@@ -45,11 +58,12 @@
 <script setup>
 import MapLines from '~/components/molecules/map/MapLines.vue';
 import MapNode from '~/components/molecules/map/MapNode.vue';
-import MapHero from '~/components/molecules/map/MapHero.vue';
+import MapFighter from '~/components/molecules/map/MapFighter.vue';
 import MapBackground from '~/components/molecules/map/MapBackground.vue';
-import { useGameStore } from '~/store/game.js';
 import useKonvaCamera from '~/composables/konva/useKonvaCamera';
-import usePlacementManager from '~/composables/game/usePlacementManager';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
+import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -61,14 +75,17 @@ const stageConfig = ref({
 const currentScale = ref(1);
 const observer = ref(null);
 
-const { map, players, activePlayer } = storeToRefs(useGameStore());
+const { client, G, ctx } = useBoardgame();
+
+const mapData = computed(() => G.value?.map);
+const playersData = computed(() => G.value?.players || []);
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
 const { getNodePosition } = useUtils();
-const { placeUnit } = usePlacementManager();
 
-const connections = computed(() => map.value?.connections || []);
-const nodes = computed(() => map.value?.circles || []);
-const nodeSize = computed(() => map.value?.settings?.nodeSize);
+const connections = computed(() => mapData.value?.connections || []);
+const nodes = computed(() => mapData.value?.circles || []);
+const nodeSize = computed(() => mapData.value?.settings?.nodeSize);
+const { dragItem, mousePos } = useGlobalDrag();
 
 const currentMapImg = ref(null);
 
@@ -88,7 +105,10 @@ const updateDimensions = () => {
   }
 };
 
+const { registerMap } = useKonvaPlacement();
+
 onMounted(async () => {
+  registerMap(stageRef, nodes, nodeSize);
   updateDimensions();
   observer.value = new ResizeObserver(updateDimensions);
   if (mapContainer.value) {
@@ -102,41 +122,21 @@ onUnmounted(() => {
   }
 });
 
-const handleNodeClick = (e, nodeId) => {
-  console.log('Выбрана нода для хода/действия:', nodeId);
-};
-
 const handleWheel = e => {
   zoomToPoint(e);
 };
 
-const dragFighter = computed(() => activePlayer.value?.fighters?.find(i => i.drag));
-
-const isDraggingOverCanvas = ref(false);
-
-const onDragOver = e => {
-  e.preventDefault();
-  isDraggingOverCanvas.value = true;
+const handleStageClick = e => {
+  const clickedOnEmpty = e.target === e.target.getStage();
+  if (clickedOnEmpty) {
+    clearMap();
+  }
 };
 
-const onDragLeave = () => {
-  isDraggingOverCanvas.value = false;
-};
-
-const onDropOnCanvas = e => {
-  isDraggingOverCanvas.value = false;
-  const fighterId = e.dataTransfer.getData('fighterId');
-  const stage = stageRef.value.getStage();
-  stage.setPointersPositions(e);
-  const transform = stage.getAbsoluteTransform().copy().invert();
-  const pointerPos = transform.point(stage.getPointerPosition());
-  const closestNode = map.value.circles.find(i => {
-    const dist = Math.sqrt(Math.pow(i.x - pointerPos.x, 2) + Math.pow(i.y - pointerPos.y, 2));
-    return dist < 100;
-  });
-
-  if (closestNode) {
-    placeUnit(fighterId, closestNode.id);
+const clearMap = () => {
+  if (client.value) {
+    client.value.moves.clearHighlights();
+    client.value.moves.resetAllFighters();
   }
 };
 </script>

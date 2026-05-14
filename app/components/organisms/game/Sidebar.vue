@@ -38,13 +38,10 @@
             <div class="flex gap-8 flex-1">
               <Card
                 :count="player[item.id]?.length"
-                :active="
-                  item.id === 'discard' ||
-                  !!activePlayer.activeCardBtns.find(i => i.id === player.id && i.type === item.id)
-                "
+                :active="player.visibility?.[item.id]"
                 @click="clickCardHandler(player.id, item)"
                 :style="isWindowActive(player.id, item.id) && { borderColor: player.color }"
-                v-for="item in cardsTypes"
+                v-for="item in decks"
                 :key="item.id"
               >
                 {{ item.name }}
@@ -66,7 +63,18 @@
       :title="`${players.find(p => p.id === i.id)?.name}: ${i.typeName}`"
       :color="players.find(p => p.id === i.id)?.color"
     >
-      <div class="py-16">{{ players.find(p => p.id === i.id)?.[i.type] || '' }}</div>
+      <div class="p-16 min-w-max">
+        <ContextMenu>
+          <div class="flex gap-8">
+            <PlayerCard
+              v-for="item in players.find(p => p.id === i.id)?.[i.type]"
+              :key="item.id"
+              :item="item"
+              :player="players.find(p => p.id === i.id)"
+            />
+          </div>
+        </ContextMenu>
+      </div>
     </Window>
   </aside>
 </template>
@@ -74,18 +82,24 @@
 import IconCards from '~/svg/cards.svg';
 import IconBag from '~/svg/box.svg';
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
+import ContextMenu from '~/components/atoms/ContextMenu.vue';
+import PlayerCard from '~/components/molecules/game/Card.vue';
 import Player from '~/components/molecules/sidebar/Player.vue';
 import Fighter from '~/components/molecules/sidebar/Fighter.vue';
 import Resources from '~/components/molecules/sidebar/Resources.vue';
 import Card from '~/components/molecules/sidebar/Card.vue';
 import Console from '~/components/molecules/sidebar/Console.vue';
-import { useGameStore } from '~/store/game.js';
 import Window from '~/components/atoms/Window.vue';
-import cardsTypes from '#shared/constants/cards';
-
-const { map, players, turn, activePlayerIndex, activePlayer } = storeToRefs(useGameStore());
+import { useAppStore } from '~/store/app.js';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const emit = defineEmits(['showStats', 'openDiscard', 'zoomEffect']);
+const { client, G, ctx } = useBoardgame();
+const { glossary } = storeToRefs(useAppStore());
+
+const decks = computed(() => glossary?.value?.meta?.decks || {});
+const players = computed(() => G.value?.players || []);
+const activePlayerIndex = computed(() => ctx.value?.currentPlayer);
 
 const activeWindows = ref([]);
 
@@ -102,18 +116,18 @@ const getMaxZIndex = () => {
   return activeWindows.value.length > 0 ? Math.max(...activeWindows.value.map(i => i.zIndex)) : 100;
 };
 
-const clickCardHandler = (id, type) => {
-  const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === type.id);
+const clickCardHandler = (id, item) => {
+  const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === item.id);
 
   if (isAlreadyOpen) {
-    bringToFront(id, type.id);
+    closeWindow(id, item.id);
     return;
   }
 
   activeWindows.value.push({
     id: id,
-    type: type.id,
-    typeName: type.name,
+    type: item.id,
+    typeName: item.name,
     zIndex: getMaxZIndex() + 1,
   });
 };

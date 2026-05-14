@@ -1,5 +1,6 @@
 export default function useApi(baseurl) {
-  const baseURL = baseurl || `/api`;
+  // const baseURL = baseurl || `/api`;
+  const baseURL = baseurl || ``;
 
   return $fetch.create({
     baseURL,

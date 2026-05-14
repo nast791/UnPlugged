@@ -1,7 +1,7 @@
 export const useAppStore = defineStore('app', {
   state: () => {
     return {
-      stopScrollingPage: false,
+      glossary: false,
     };
   },
   getters: {},

@@ -1,0 +1,37 @@
+import { activePlayer, addLog } from '#shared/utils/actions/utils';
+import { placeUnit, finishUnitPlacement, autoPlaceAI, getAvailableCells } from '#shared/utils/actions/placement';
+
+export const placementPhase = {
+  onEnd: ({ G, events }) => {
+    addLog(G, 'Все бойцы расставлены. Начинаем игру!');
+  },
+  turn: {
+    onBegin: ({ G, ctx, events }) => {
+      const allPlaced = G.players.every(p => p.fighters.every(f => f.position !== null));
+      if (allPlaced) {
+        events.setPhase('TURN_START');
+        return;
+      }
+
+      const player = activePlayer({ G, ctx });
+
+      if (player.type === 'human') {
+        addLog(G, `Игрок ${player.name}: расставьте бойцов`);
+      } else {
+        addLog(G, `Игрок ${player.name} расставляет силы...`);
+        autoPlaceAI({ G, ctx, events });
+      }
+    },
+  },
+  moves: {
+    getAvailableCells: ({ G, ctx }, { fighterId }) => {
+      G.highlightCells = getAvailableCells({ G, ctx, fighterId });
+    },
+    placeUnit: ({ G, ctx }, { unitId, circleId }) => {
+      return placeUnit({ G, ctx, unitId, circleId });
+    },
+    finishUnitPlacement: ({ G, ctx, events }) => {
+      return finishUnitPlacement({ G, ctx, events });
+    },
+  },
+};

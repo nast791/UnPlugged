@@ -15,7 +15,10 @@
         >
           <div
             class="window-header cursor-move flex items-center justify-between px-16 py-8 text-white font-bold rounded-t-8"
-            :style="{ backgroundColor: color, color: getContrastColor(color) >= 130 ? '#000000' : '#ffffff' }"
+            :style="{
+              backgroundColor: color,
+              color: getContrastColor(color) >= 130 ? '#000000' : '#ffffff',
+            }"
           >
             <DialogTitle class="text-16 uppercase tracking-wider">
               {{ title }}
@@ -26,12 +29,12 @@
                 class="hover:bg-black/20 rounded transition-colors flex cursor-pointer"
                 @click="onClose"
               >
-                <Icon name="material-symbols-light:close-rounded" :size="27" />
+                <Icon name="material-symbols-light:close-rounded" :size="22" />
               </button>
             </DialogClose>
           </div>
 
-          <ScrollArea class="flex-1 text-neutral-200 px-16">
+          <ScrollArea :dir="['x', 'y']" class="flex-1 text-neutral-200">
             <slot />
           </ScrollArea>
         </DraggableResizableVue>
@@ -43,18 +46,22 @@
 import DraggableResizableVue from 'draggable-resizable-vue3';
 import ScrollArea from '~/components/atoms/ScrollArea.vue';
 import useUtils from '~/composables/useUtils';
+import { useStorage, useWindowSize, useElementSize } from '@vueuse/core';
 
-defineProps({
+const { title, isOpen } = defineProps({
   title: String,
   color: { type: String, default: '#7a7f8d' },
   isOpen: { type: Boolean, default: false },
   zIndex: Number,
 });
 
-const windowRect = ref({
+const { width: windowW, height: windowH } = useWindowSize();
+
+const storageKey = computed(() => `window-rect-${title || 'default'}`);
+const windowRect = useStorage(storageKey.value, {
   x: 100,
   y: 100,
-  width: 400,
+  width: 900,
   height: 300,
 });
 
@@ -65,4 +72,24 @@ const onClose = () => {
 };
 
 const { getContrastColor } = useUtils();
+
+const clampBounds = () => {
+  if (!windowW.value || !windowH.value) return;
+  if (windowRect.value.width > windowW.value) windowRect.value.width = windowW.value - 20;
+  if (windowRect.value.height > windowH.value) windowRect.value.height = windowH.value - 20;
+  const maxX = windowW.value - windowRect.value.width;
+  if (windowRect.value.x < 0) windowRect.value.x = 0;
+  if (windowRect.value.x > maxX) windowRect.value.x = maxX;
+  const maxY = windowH.value - windowRect.value.height;
+  if (windowRect.value.y < 0) windowRect.value.y = 0;
+  if (windowRect.value.y > maxY) windowRect.value.y = maxY;
+};
+
+watch([windowW, windowH], () => {
+  clampBounds();
+}, { immediate: true });
+
+watch(() => isOpen, (val) => {
+  if (val) nextTick(() => clampBounds());
+});
 </script>

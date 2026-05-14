@@ -1,29 +1,55 @@
 import { defineStore } from 'pinia';
-import PLAYER_ACTIONS from '#shared/constants/actions';
+import { useAppStore } from '~/store/app.js';
+import GAME_PHASES from '#shared/constants/phases';
 
 export const useGameStore = defineStore('game', {
   state: () => ({
+    selectedMap: null,
+    selectedPlayers: [],
+    localPlayerId: '0',
+    activeSetupData: null,
+    
     id: null,
     phase: null,
-    isPhaseAction: false,
     map: null,
-    isGameStarted: false,
     activePlayerIndex: 0,
     players: [],
     timer: 0,
     turn: 0,
-    intent: {
-      selectedAction: null,
-      selectedCardId: null,
-      selectedUnitId: null, 
-      targets: [], 
-    },
+    round: 0,
+    selectedAction: null,
+    selectedCardId: null,
+    bonusMovement: 0,
+    bonusMovementCardId: null,
+    selectedUnitId: null,
     history: [],
+    winner: null
   }),
   getters: {
     activePlayer: state => state.players?.find(i => i.index === state.activePlayerIndex),
-    selectedActionName: state =>
-      PLAYER_ACTIONS[state.intent.selectedAction]?.name || '',
+    isActivePlayerHuman: state => {
+      const { glossary } = storeToRefs(useAppStore());
+      const human = glossary.value?.meta?.players?.[0]?.id;
+      return state.activePlayer?.type === human;
+    },
+    selectedActionName: state => {
+      const { glossary } = storeToRefs(useAppStore());
+      return (
+        glossary.value?.meta?.actions?.find(i => i.id === state.selectedAction)?.name || ''
+      );
+    },
+  },
+  actions: {
+    goToPhase(targetPhaseId) {
+      const nextPhase = GAME_PHASES.find(i => i.id === targetPhaseId);
+      const currentPhase = this.phase ? GAME_PHASES.find(i => i.id === this.phase) : null;
+
+      if (currentPhase?.next.includes(targetPhaseId) || nextPhase.start) {
+        this.phase = targetPhaseId;
+      } else {
+        console.error('Ошибка перехода');
+      }
+    },
   },
   // persist: [
   //   {

@@ -72,6 +72,7 @@ export default defineNuxtConfig({
     '@pinia-plugin-persistedstate/nuxt',
     'radix-vue/nuxt',
     '@nuxt/icon',
+    '@nuxt/content',
   ],
   headlessui: {
     prefix: 'H',
@@ -83,9 +84,7 @@ export default defineNuxtConfig({
       defaultOptions: {
         queries: {
           networkMode: 'always',
-          retry: 1,
-          retryDelay: 1000,
-          staleTime: 60000 * 60 * 12,
+          staleTime: 60000 * 60 * 6,
           refetchOnWindowFocus: false,
         },
         mutations: {
@@ -101,5 +100,8 @@ export default defineNuxtConfig({
   experimental: {
     payloadExtraction: true,
     typedPages: true,
+  },
+  icon: {
+    serverBundle: 'remote',
   },
 });

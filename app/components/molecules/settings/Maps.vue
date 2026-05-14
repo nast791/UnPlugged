@@ -4,7 +4,7 @@
 
     <div class="flex flex-col gap-8">
       <Select
-        :modelValue="map?.id"
+        :modelValue="selectedMap?.id"
         placeholder="Выберите поле"
         :options="listMaps"
         @update:modelValue="addMap"
@@ -32,13 +32,13 @@ const { maps } = defineProps({
   maps: Array,
 });
 
-const { map, players } = storeToRefs(useGameStore());
+const { selectedMap, selectedPlayers } = storeToRefs(useGameStore());
 const { cloneDeep } = useUtils();
 
 const listMaps = computed(
   () =>
     maps?.map(i => {
-      i.disabled = i.players < players.value?.length;
+      i.disabled = i.players < selectedPlayers.value?.length;
       return i;
     }) || [],
 );
@@ -47,6 +47,6 @@ const addMap = id => {
   const item = maps.find(i => i.id === id);
   const field = cloneDeep(item);
   delete field.disabled;
-  map.value = field;
+  selectedMap.value = field;
 };
 </script>

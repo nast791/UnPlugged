@@ -1,27 +1,27 @@
 <template>
   <div
-    class="flex flex-col p-12 rounded-12 bg-linear-to-r from-white/5 to-transparent bg-[#1b1c21] border transition-all border-white/30 relative overflow-hidden group"
+    class="flex flex-col p-12 rounded-12 bg-linear-to-r from-white/5 to-transparent bg-black-100 border transition-all border-white/30 relative overflow-hidden group"
     :class="[
       item.acted && 'grayscale',
       isStacked && index > 0 && `-mt-50`,
       isStacked && !item.active && `z-${index}`,
-      item.active && `z-1000!`,
+      item.active && `z-1000! border-(--brand-color)! to-white-30!`,
     ]"
+    :style="{ '--brand-color': player.color }"
     v-if="item && player"
-    @click.stop="setActiveItem()"
+    @click.stop="client.moves.toggleActiveFighter({ fighterId: item.id })"
   >
     <div class="flex flex-1 justify-between gap-24">
       <div class="flex flex-1 gap-8 items-center">
         <NuxtImg
           loading="lazy"
           :src="item.image"
-          class="w-45 h-45 rounded-full border-2 object-cover shadow-xl"
-          :class="[isDraggable && 'cursor-grab']"
+          class="w-45 h-45 rounded-full border-2 object-cover shadow-xl select-none"
+          :class="[isDraggable && 'cursor-grab active:cursor-grabbing']"
           :style="{ borderColor: player.color }"
           alt=""
-          :draggable="isDraggable"
-          @dragstart="onDragStart"
-          @dragend="onDragEnd"
+          @mousedown.prevent="onStartDragging"
+          :draggable="false"
         />
 
         <div class="flex flex-col flex-1 gap-4">
@@ -32,8 +32,16 @@
 
             <div class="flex gap-10">
               <div class="flex gap-4">
-                <div class="text-14 font-bold text-slate-300 font-mono">{{ item.move }}</div>
-                <IconFoot class="text-slate-500 w-12 h-12" />
+                <div class="text-14 font-bold text-slate-300 font-mono">
+                  {{ Number(item.move) + Number(item.bonusMovement) }}
+                </div>
+                <div
+                  class="text-14 font-bold text-cyan-400 font-mono"
+                  v-if="G.bonus && ctx.phase === 'MOVEMENT' && isMyFighter"
+                >
+                  +{{ G.bonus }}
+                </div>
+                <Icon name="game-icons:walking-boot" class="text-slate-500 size-14! self-start" />
               </div>
 
               <component :is="rangeType" class="text-slate-500 w-13 h-13" />
@@ -80,7 +88,9 @@ import IconSword from '~/svg/sword.svg';
 import IconBow from '~/svg/bow.svg';
 import IconFlail from '~/svg/flail.svg';
 import Note from '~/components/molecules/sidebar/Note.vue';
-import { useGameStore } from '~/store/game.js';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
+import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
+import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const { group, item, player } = defineProps({
   item: { type: Object, default: null },
@@ -88,11 +98,24 @@ const { group, item, player } = defineProps({
   group: { type: Array, default: () => [] },
 });
 
-const { activePlayerIndex, phase } = storeToRefs(useGameStore());
+const { client, G, ctx, activePlayer } = useBoardgame();
 const isStacked = computed(() => group?.length > 1);
-const isDraggable = computed(
-  () => activePlayerIndex.value === player.index && phase.value === 'UNIT_PLACEMENT',
-);
+const isMyTurn = computed(() => {
+  if (!(ctx.value || client.value)) return;
+  return String(ctx.value.currentPlayer) === String(client.value.playerID);
+});
+
+const isMyFighter = computed(() => {
+  if (!activePlayer.value) return;
+  return String(activePlayer.value.id) === String(player.id);
+});
+
+const isDraggable = computed(() => {
+  if (!ctx.value) return false;
+  const isPlacement = ctx.value.phase === 'UNIT_PLACEMENT';
+  return isMyTurn.value && isMyFighter.value && isPlacement;
+});
+
 const index = computed(() => group.findIndex(i => i.id === item.id));
 
 const rangeType = computed(() => {
@@ -106,13 +129,6 @@ const rangeType = computed(() => {
   }
 });
 
-const setActiveItem = () => {
-  if (item.active) return;
-  const currentActive = group.find(i => i.active);
-  if (currentActive) currentActive.active = false;
-  item.active = true;
-};
-
 const getHealthColor = (current, max) => {
   const percent = (current / max) * 100;
   if (percent > 50) return 'bg-emerald-500';
@@ -120,15 +136,14 @@ const getHealthColor = (current, max) => {
   return 'bg-rose-600';
 };
 
-const onDragStart = e => {
-  e.dataTransfer.setData('fighterId', item.id);
-  item.drag = true;
-  e.dataTransfer.effectAllowed = 'move';
-  const dragIcon = e.target;
-  e.dataTransfer.setDragImage(dragIcon, 24, 24);
-};
+const { startDrag } = useGlobalDrag();
+const { executeDrop } = useKonvaPlacement();
 
-const onDragEnd = e => {
-  delete item.drag;
+const onStartDragging = () => {
+  if (!isDraggable.value) return;
+
+  startDrag(item, (event, fighter) => {
+    executeDrop(event, fighter);
+  });
 };
 </script>
