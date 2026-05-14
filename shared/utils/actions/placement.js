@@ -7,7 +7,7 @@ export const setPosition = ({G, unit, circleId}) => {
   addLog(G, `${unit.name} выставлен на позицию ${circleId}`);
 };
 
-export const getAvailablePoints = ({G, ctx, fighterId}) => {
+export const getAvailableCells = ({G, ctx, fighterId}) => {
   const player = activePlayer({ G, ctx });
   const fighter = player.fighters.find(f => f.id === fighterId);
   if (!fighter) return { hero: [], assistant: [] };
@@ -38,14 +38,14 @@ export const autoPlaceAI = ({ G, ctx, events }) => {
   const player = activePlayer({ G, ctx });
 
   const hero = player.fighters.find(f => f.type === 'hero');
-  const heroPoints = getAvailablePoints({G, ctx, fighterId: hero.id}).hero;
+  const heroPoints = getAvailableCells({G, ctx, fighterId: hero.id}).hero;
   if (hero && heroPoints.length > 0) {
     setPosition({G, unit: hero, circleId: heroPoints[0]});
   }
 
   const assistants = player.fighters.filter(f => f.type === 'assistant');
   assistants.forEach(assistant => {
-    const points = getAvailablePoints({G, ctx, fighterId: assistant.id}).assistant;
+    const points = getAvailableCells({G, ctx, fighterId: assistant.id}).assistant;
     if (points.length > 0) {
       const randomPoint = points[Math.floor(Math.random() * points.length)];
       setPosition({G, unit: assistant, circleId: randomPoint});
@@ -62,7 +62,7 @@ export const placeUnit = ({ G, ctx, unitId, circleId }) => {
   const unit = player?.fighters?.find(i => i.id === unitId);
   if (!unit) return INVALID_MOVE;
 
-  const points = getAvailablePoints({G, ctx, fighterId: unitId});
+  const points = getAvailableCells({G, ctx, fighterId: unitId});
   const isOccupied = G.players.some(p =>
     p.fighters.some(f => f.position === circleId && f.id !== unitId),
   );

@@ -2,13 +2,14 @@
   <v-group :config="groupConfig">
     <v-circle :config="hoverConfig" v-if="isHovered" />
     <v-circle :config="mainCircleConfig" />
-    <v-circle v-if="activeStatus" :config="highlightConfig" />
+    <v-circle v-if="isHighlighted" :config="highlightConfig" />
   </v-group>
 </template>
 
 <script setup>
-import { useAppStore } from '~/store/app.js';
 import { useBoardgame } from '~/composables/game/useBoardgame';
+import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
+import { useAppStore } from '~/store/app.js';
 
 defineOptions({
   inheritAttrs: false,
@@ -17,20 +18,19 @@ defineOptions({
 const props = defineProps({
   node: { type: Object, required: true },
   nodeSize: { type: Number, default: 40 },
-  isHighlighted: { type: Boolean, default: false },
-  highlightType: { type: Number, default: 0 },
 });
 
 const emit = defineEmits(['select']);
-const appStore = useAppStore();
 
 const isHovered = ref(false);
+const { client, activePlayer, G, ctx } = useBoardgame();
+const { dragItem } = useGlobalDrag();
+const appStore = useAppStore();
 
-const highlightings = appStore.glossary?.meta?.highlighting;
-
-const activeStatus = computed(() => {
-  if (!props.isHighlighted) return null;
-  return highlightings?.[props.highlightType] || highlightings?.[0];
+watch(dragItem, newItem => {
+  if (newItem) {
+    client.value.moves.getAvailableCells({ fighterId: newItem.id });
+  }
 });
 
 const groupConfig = computed(() => ({
@@ -63,23 +63,48 @@ const hoverConfig = computed(() => ({
   opacity: 0.2,
 }));
 
+const highlightings = appStore.glossary?.meta?.highlighting;
+
+const isHighlighted = computed(() => {
+  const id = String(props.node.id);
+  if (dragItem.value) {
+    const type = dragItem.value.type;
+
+    if (G.value.highlightCells[type] && Array.isArray(G.value.highlightCells[type])) {
+      return G.value.highlightCells[type].map(String).includes(id);
+    }
+    return false;
+  }
+
+  if (Array.isArray(G.value.highlightCells)) {
+    return G.value.highlightCells.map(String).includes(id);
+  }
+
+  return false;
+});
+
+const currentPhase = computed(() => ctx.value?.phase);
+
+const currentHighlight = computed(() => {
+  if (currentPhase.value === 'UNIT_PLACEMENT') return highlightings?.[0];
+  if (currentPhase.value === 'MOVEMENT') return highlightings?.[1];
+  return highlightings?.[0];
+});
+
 const highlightConfig = computed(() => ({
   x: 0,
   y: 0,
   radius: props.nodeSize / 2 + 5,
-  stroke: activeStatus.value.color,
+  stroke: currentHighlight.value.color,
   strokeWidth: 4,
   opacity: 0.9,
-  shadowColor: activeStatus.value.color,
+  shadowColor: currentHighlight.value.color,
   shadowBlur: 10,
   listening: false,
 }));
 
-const { client, activePlayer } = useBoardgame();
-
 const handlePointerClick = e => {
   if (e.cancelBubble !== undefined) e.cancelBubble = true;
-  if (!activeStatus.value) return;
   const activeFighter = activePlayer.value?.fighters?.find(i => i.active);
   if (!activeFighter) return;
   if (client.value?.moves?.moveFighter) {

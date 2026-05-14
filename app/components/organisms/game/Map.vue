@@ -19,8 +19,6 @@
               :key="node.id"
               :node="node"
               :nodeSize="nodeSize"
-              :is-highlighted="checkIfHighlighted(node.id)"
-              :highlight-type="currentHighlightType"
               @select="clearMap"
             />
 
@@ -32,7 +30,6 @@
                 :scale="currentScale"
                 :color="player.color"
                 :item="item"
-                v-model="highlightedCells"
                 v-for="item in player?.fighters"
                 :key="`${player.id}-${item.id}-${item.position}`"
               />
@@ -67,7 +64,6 @@ import useKonvaCamera from '~/composables/konva/useKonvaCamera';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
 import { useBoardgame } from '~/composables/game/useBoardgame';
-import { getAvailablePoints } from '#shared/utils/actions/placement';
 
 const mapContainer = ref(null);
 const stageRef = ref(null);
@@ -83,7 +79,6 @@ const { client, G, ctx } = useBoardgame();
 
 const mapData = computed(() => G.value?.map);
 const playersData = computed(() => G.value?.players || []);
-const currentPhase = computed(() => ctx.value?.phase);
 const { zoomToPoint, centerOnImage } = useKonvaCamera(stageRef, currentScale);
 const { getNodePosition } = useUtils();
 
@@ -131,8 +126,6 @@ const handleWheel = e => {
   zoomToPoint(e);
 };
 
-const highlightedCells = ref([]);
-
 const handleStageClick = e => {
   const clickedOnEmpty = e.target === e.target.getStage();
   if (clickedOnEmpty) {
@@ -141,26 +134,9 @@ const handleStageClick = e => {
 };
 
 const clearMap = () => {
-  highlightedCells.value = [];
   if (client.value) {
+    client.value.moves.clearHighlights();
     client.value.moves.resetAllFighters();
   }
 };
-
-const checkIfHighlighted = nodeId => {
-  const id = String(nodeId);
-  if (currentPhase.value === 'UNIT_PLACEMENT' && dragItem.value) {
-    const points = getAvailablePoints({G: G.value, ctx: ctx.value, fighterId: dragItem.value.id});
-    const type = dragItem.value.type;
-    return points[type]?.map(String).includes(id);
-  }
-
-  return highlightedCells.value.map(String).includes(id);
-};
-
-const currentHighlightType = computed(() => {
-  if (currentPhase.value === 'UNIT_PLACEMENT') return 0;
-  if (currentPhase.value === 'MOVEMENT') return 1;
-  return 0;
-});
 </script>

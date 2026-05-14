@@ -12,7 +12,7 @@ export const movement = {
   },
   moves: {
     getAvailableCells: ({ G, ctx }, { fighterId }) => {
-      return getAvailableCells({ G, ctx, fighterId });
+      G.highlightCells = getAvailableCells({ G, ctx, fighterId });
     },
     applyBonus: ({ G, ctx }, cardId) => {
       return applyBonus({ G, ctx, cardId });

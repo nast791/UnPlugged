@@ -1,3 +1,6 @@
+import {getAvailableCells as getAvailableCellsMove} from '#shared/utils/actions/movement';
+import {getAvailableCells as getAvailableCellsPlace} from '#shared/utils/actions/placement';
+
 export const activePlayer = ({G, ctx}) => {
   return G.players[ctx.currentPlayer];
 };
@@ -18,6 +21,27 @@ export const setFighterActive = ({G, ctx}, { fighterId, active }) => {
 export const resetAllFighters = ({G, ctx}) => {
   const player = activePlayer({G, ctx});
   player.fighters.forEach(f => (f.active = false));
+};
+
+export const clearHighlights = ({G}) => {
+  G.highlightCells = [];
+};
+
+export const toggleActiveFighter = ({G, ctx}, { fighterId }) => {
+  const player = activePlayer({G, ctx});
+  const fighter = player.fighters.find(f => f.id === fighterId);
+  if (!fighter) return;
+  const state = fighter.active;
+  clearHighlights({G});
+  resetAllFighters({G, ctx});
+  const currentPhase = ctx.phase;
+  fighter.active = !state;
+  if (!fighter.active) return;
+  if (currentPhase === 'UNIT_PLACEMENT') {
+    G.highlightCells = getAvailableCellsPlace({ G, ctx, fighterId });
+  } else if (currentPhase === 'MOVEMENT') {
+    G.highlightCells = getAvailableCellsMove({ G, ctx, fighterId });
+  }
 };
 
 export const drawCards = ({ G, player, count = 1 }) => {

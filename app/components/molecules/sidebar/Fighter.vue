@@ -9,7 +9,7 @@
     ]"
     :style="{ '--brand-color': player.color }"
     v-if="item && player"
-    @click.stop="setActiveItem()"
+    @click.stop="client.moves.toggleActiveFighter({ fighterId: item.id })"
   >
     <div class="flex flex-1 justify-between gap-24">
       <div class="flex flex-1 gap-8 items-center">
@@ -32,8 +32,16 @@
 
             <div class="flex gap-10">
               <div class="flex gap-4">
-                <div class="text-14 font-bold text-slate-300 font-mono">{{ item.move }}</div>
-                <IconFoot class="text-slate-500 w-12 h-12" />
+                <div class="text-14 font-bold text-slate-300 font-mono">
+                  {{ Number(item.move) + Number(item.bonusMovement) }}
+                </div>
+                <div
+                  class="text-14 font-bold text-cyan-400 font-mono"
+                  v-if="G.bonus && ctx.phase === 'MOVEMENT' && isMyFighter"
+                >
+                  +{{ G.bonus }}
+                </div>
+                <Icon name="game-icons:walking-boot" class="text-slate-500 size-14! self-start" />
               </div>
 
               <component :is="rangeType" class="text-slate-500 w-13 h-13" />
@@ -120,17 +128,6 @@ const rangeType = computed(() => {
       return markRaw(IconFlail);
   }
 });
-
-const setActiveItem = () => {
-  if (!isMyFighter.value) return;
-
-  if (item.active) {
-    client.value.moves.resetAllFighters();
-  } else {
-    client.value.moves.resetAllFighters();
-    client.value.moves.setFighterActive({ fighterId: item.id, active: true });
-  }
-};
 
 const getHealthColor = (current, max) => {
   const percent = (current / max) * 100;

@@ -96,7 +96,6 @@ const { imageUrl, position, nodeSize, item } = defineProps({
   item: { type: Object, required: true },
 });
 
-const model = defineModel();
 const { loadAsset } = useKonvaLoader();
 const heroImg = ref(null);
 const imageNode = ref(null);
@@ -118,8 +117,8 @@ const groupConfig = computed(() => {
     width: nodeSize,
     height: nodeSize,
     listening: true,
-    onClick: onFighterSelect,
-    onTap: onFighterSelect,
+    onClick: () => client.value.moves.toggleActiveFighter({ fighterId: item.id }),
+    onTap: () => client.value.moves.toggleActiveFighter({ fighterId: item.id }),
     onMouseEnter: e => {
       isHovered.value = true;
       const stage = e.target.getStage();
@@ -151,41 +150,7 @@ const initFighter = async () => {
   }
 };
 
-const onFighterSelect = () => {
-  setActiveItem();
-
-  if (client.value?.moves?.getAvailableCells) {
-    const result = client.value.moves.getAvailableCells({ fighterId: item.id });
-    model.value = result || [];
-    console.log(result);
-  }
-};
-
-const isMyFighter = computed(() => {
-  if (!activePlayer.value) return;
-  return activePlayer.value.fighters.find(i => i.id === item.id);
-});
-
-const setActiveItem = () => {
-  if (!isMyFighter.value) return;
-
-  if (item.active) {
-    client.value.moves.resetAllFighters();
-  } else {
-    client.value.moves.resetAllFighters();
-    client.value.moves.setFighterActive({ fighterId: item.id, active: true });
-  }
-};
-
 onMounted(initFighter);
 
 watch(() => imageUrl, initFighter);
-watch(
-  () => item.active,
-  isActive => {
-    if (!isActive) {
-      model.value = [];
-    }
-  },
-);
 </script>

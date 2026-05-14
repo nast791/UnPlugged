@@ -1,5 +1,5 @@
 import { activePlayer, addLog } from '#shared/utils/actions/utils';
-import { placeUnit, finishUnitPlacement, autoPlaceAI } from '#shared/utils/actions/placement';
+import { placeUnit, finishUnitPlacement, autoPlaceAI, getAvailableCells } from '#shared/utils/actions/placement';
 
 export const placementPhase = {
   onEnd: ({ G, events }) => {
@@ -24,6 +24,9 @@ export const placementPhase = {
     },
   },
   moves: {
+    getAvailableCells: ({ G, ctx }, { fighterId }) => {
+      G.highlightCells = getAvailableCells({ G, ctx, fighterId });
+    },
     placeUnit: ({ G, ctx }, { unitId, circleId }) => {
       return placeUnit({ G, ctx, unitId, circleId });
     },

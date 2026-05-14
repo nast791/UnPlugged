@@ -5,7 +5,7 @@ import { movement } from './phases/movement';
 import { attack } from './phases/attack';
 import { effect } from './phases/effect';
 import { turnEnd } from './phases/turnend';
-import { setFighterActive, resetAllFighters } from '#shared/utils/actions/utils';
+import { setFighterActive, resetAllFighters, clearHighlights, toggleActiveFighter } from '#shared/utils/actions/utils';
 import { TurnOrder } from 'boardgame.io/core';
 
 const createPhase = (config) => ({
@@ -17,6 +17,8 @@ const createPhase = (config) => ({
   moves: {
     setFighterActive,
     resetAllFighters,
+    clearHighlights,
+    toggleActiveFighter,
     ...(config.moves || {})
   }
 });
@@ -30,12 +32,13 @@ export const game = {
       selectedAction: null,
       selectedUnitId: null,
       selectedCardId: null,
-      bonusValue: 0,
-      bonusCardId: null,
+      bonus: 0,
+      bonusCards: [],
       turn: 0,
       log: [],
       pendingActions: [],
-      winner: false
+      winner: false,
+      highlightCells: []
     };
   },
   endIf: ({ G, ctx }) => {
