@@ -2,6 +2,12 @@
   "name": "UnPlugged",
   "type": "module",
   "private": true,
+  "imports": {
+    "#shared/*": "./shared/*",
+    "#boardgame/core": "boardgame.io/dist/cjs/core.js",
+    "#boardgame/client": "boardgame.io/dist/cjs/client.js",
+    "#boardgame/multiplayer": "boardgame.io/dist/cjs/multiplayer.js"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "npx nuxi dev",
@@ -11,11 +17,17 @@
     "postinstall": "nuxt prepare",
     "clean": "npx nuxi cleanup",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:pipeline": "node shared/utils/rules/pipeline.test.mjs",
+    "test:skills": "node shared/utils/rules/skills.test.mjs",
+    "test:rules": "node shared/utils/rules/rules.test.mjs",
+    "test:game": "node shared/utils/game.test.mjs",
+    "test:integration": "node shared/utils/game.integration.test.mjs",
+    "test:phases": "node shared/utils/phases/phases.test.mjs",
+    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:game && yarn test:integration && yarn test:phases"
   },
   "dependencies": {
     "@fontsource-variable/onest": "5.2.11",
-    "@nuxt/content": "3.12.0",
     "@nuxt/icon": "2.2.1",
     "@nuxt/image": "2.0.0",
     "@nuxtjs/supabase": "2.0.4",
@@ -24,10 +36,10 @@
     "@pinia/nuxt": "0.11.3",
     "@tailwindcss/vite": "4.2.1",
     "@vueuse/core": "14.2.1",
-    "better-sqlite3": "^12.8.0",
     "boardgame.io": "0.50.2",
     "draggable-resizable-vue3": "1.0.94-beta",
     "jexl": "2.3.0",
+    "json-rules-engine": "7.3.1",
     "konva": "10.2.0",
     "nuxt": "^4.3.1",
     "pinia": "3.0.4",

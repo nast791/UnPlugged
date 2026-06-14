@@ -73,7 +73,7 @@
   </div>
 </template>
 <script setup>
-import { useAppStore } from '~/store/app.js';
+import { getCardType } from '#shared/constants/cardTypes';
 import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const { item, player } = defineProps({
@@ -87,9 +87,7 @@ const { item, player } = defineProps({
   },
 });
 
-const { glossary } = storeToRefs(useAppStore());
-
-const settings = computed(() => glossary?.value?.meta?.cards?.find(i => i.id === item.type) || {});
+const settings = computed(() => getCardType(item.type));
 const { client, G, ctx, activePlayer } = useBoardgame();
 
 const fighterName = computed(

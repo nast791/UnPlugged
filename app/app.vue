@@ -17,24 +17,5 @@
   </div>
 </template>
 <script setup>
-import { useAppStore } from '~/store/app.js';
-import { useGlossary } from '~/composables/api/glossary';
-import { useGamePhases } from '~/composables/phases';
-
 const route = useRoute();
-const { data } = useGlossary();
-const { glossary } = storeToRefs(useAppStore());
-const allActions = useGamePhases();
-
-const { $registerActions } = useNuxtApp();
-
-watch(data, (newData) => {
-  if (newData) {
-    glossary.value = newData;
-  }
-}, { immediate: true })
-
-onMounted(() => {
-  $registerActions(allActions);
-});
 </script>

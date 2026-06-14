@@ -59,7 +59,7 @@ import ColorPicker from '~/components/atoms/ColorPicker.vue';
 import Switch from '~/components/atoms/Switch.vue';
 import Controls from '~/components/molecules/settings/Controls.vue';
 import { useGameStore } from '~/store/game.js';
-import { useAppStore } from '~/store/app';
+import { PLAYER_TYPES } from '#shared/constants/playerTypes';
 import useUtils from '~/composables/useUtils';
 import Select from '~/components/atoms/Select.vue';
 
@@ -69,9 +69,11 @@ const { heroes } = defineProps({
 
 const MAX = 2;
 
-const { glossary } = storeToRefs(useAppStore());
 const { selectedPlayers, localPlayerId } = storeToRefs(useGameStore());
 const { cloneDeep } = useUtils();
+
+const human = PLAYER_TYPES.HUMAN;
+const ai = PLAYER_TYPES.AI;
 
 const listHeroes = computed(
   () =>
@@ -82,21 +84,22 @@ const listHeroes = computed(
 );
 
 const hasHeroes = computed(() => listHeroes.value?.filter(i => !i.disabled).length > 0);
-const human = computed(() => glossary.value?.meta?.players?.[0]);
-const ai = computed(() => glossary.value?.meta?.players?.[1]);
 
 const addPlayer = (id, index) => {
   const item = heroes.find(i => i.id === id);
   const player = cloneDeep(item);
   delete player.disabled;
-  player.type = !selectedPlayers.value?.length || !selectedPlayers.value?.find(i => i.type === human.value?.id) ? human.value?.id : ai.value?.id;
+  player.type =
+    !selectedPlayers.value?.length || !selectedPlayers.value?.find(i => i.type === human.id)
+      ? human.id
+      : ai.id;
   player.index = index + 1;
   if (selectedPlayers.value[index]) {
     selectedPlayers.value[index] = player;
   } else {
     selectedPlayers.value.push(player);
   }
-  const humanIndex = selectedPlayers.value.findIndex(p => p.type === human.value?.id);
+  const humanIndex = selectedPlayers.value.findIndex(p => p.type === human.id);
   if (humanIndex !== -1) {
     localPlayerId.value = String(humanIndex);
   }
@@ -114,14 +117,14 @@ const removeRow = index => {
   if (counter.value > 1) {
     counter.value--;
   }
-  const humanIndex = selectedPlayers.value.findIndex(p => p.type === human.value?.id);
+  const humanIndex = selectedPlayers.value.findIndex(p => p.type === human.id);
   localPlayerId.value = humanIndex !== -1 ? String(humanIndex) : "0";
 };
 
 watch(
   () => selectedPlayers.value.map(p => p.type),
   (newTypes) => {
-    const humanIndex = newTypes.findIndex(t => t === human.value?.id);
+    const humanIndex = newTypes.findIndex(t => t === human.id);
     if (humanIndex !== -1) {
       localPlayerId.value = String(humanIndex);
     }

@@ -1,0 +1,44 @@
+{
+  "id": "tesla",
+  "heroes": [
+    {
+      "id": "tesla",
+      "name": "Никола Тесла",
+      "hp": 14,
+      "move": 2,
+      "attackType": "ranged",
+      "attackRange": 1,
+      "size": 1,
+      "image": "avatar.webp"
+    }
+  ],
+  "assistants": [],
+  "items": [
+    {
+      "id": "coil_1",
+      "type": "coil",
+      "color": "#FACC15",
+      "state": "active",
+      "icon": "bi:lightning-fill",
+      "name": "Катушка Теслы"
+    },
+    {
+      "id": "coil_2",
+      "type": "coil",
+      "color": "#FACC15",
+      "state": "inactive",
+      "icon": "bi:lightning-fill",
+      "name": "Катушка Теслы"
+    }
+  ],
+  "skill": {
+    "id": "tesla_skill",
+    "title": "Мастерство катушек",
+    "trigger": ["start_game", "start_turn", "end_turn"], 
+    "text": "В начале игры 1 катушка уже активна. Конец хода: активируйте 1 катушку. Начало хода: если обе катушки активны, нанесите 1 урон каждому вражескому бойцу на соседних с Теслой клетках и передвиньте их на расстояние до 1 клетки."
+  },
+  "cards": {
+    "cardBack": "assets/card_back.webp",
+    "cardsDir": "assets/cards/"
+  }
+}

@@ -136,7 +136,7 @@ const handleStageClick = e => {
 const clearMap = () => {
   if (client.value) {
     client.value.moves.clearHighlights();
-    client.value.moves.resetAllFighters();
+    client.value.moves.clearOwnSelection();
   }
 };
 </script>

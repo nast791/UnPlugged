@@ -1,10 +1,9 @@
 import { useGameStore } from '~/store/game.js';
-import { useAppStore } from '~/store/app';
+import { PLAYER_TYPES } from '#shared/constants/playerTypes';
 import useUtils from '~/composables/useUtils';
 import { getMap, getHeroes } from '~/composables/api/plugins';
 
 export const useGameInit = () => {
-  const appStore = useAppStore();
   const nuxtConfig = useRuntimeConfig();
   const { shuffle } = useUtils();
   const isEnabled = ref(false); 
@@ -17,7 +16,7 @@ export const useGameInit = () => {
 
     const newGameId = crypto.randomUUID();
 
-    const players = heroesQuery?.data.value?.map(player => {
+    const players = heroesQuery?.data.value?.map((player, index) => {
       const fullDeck = player.cards.flatMap(card =>
         Array.from({ length: card.quantity || 1 }, (_, i) => ({
           ...card,
@@ -63,10 +62,13 @@ export const useGameInit = () => {
         }) || []),
       ];
 
-      const isHuman = player.type === appStore.glossary?.meta?.players?.[0]?.id;
+      const isHuman = player.type === PLAYER_TYPES.HUMAN.id;
 
       return {
         ...player,
+        packId: player.id,
+        id: String(index),
+        index: index + 1,
         items,
         fighters,
         hand: shuffledCards.splice(-5),

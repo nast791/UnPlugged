@@ -1,7 +1,7 @@
 <template>
   <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y">
     <v-circle
-      v-if="item.active"
+      v-if="isHighlighted"
       :config="{
         radius: nodeSize / 3 + 8,
         fill: color,
@@ -12,7 +12,6 @@
         listening: false,
       }"
     />
-
     <!-- 1. Тень под фишкой (для эффекта левитации) -->
     <v-circle
       :config="{
@@ -24,7 +23,6 @@
         listening: false,
       }"
     />
-
     <!-- 2. Основание фишки (пластиковый борт) -->
     <v-circle
       :config="{
@@ -36,7 +34,6 @@
         strokeWidth: 1,
       }"
     />
-
     <!-- 3. Внутренняя кромка (создает объемный бортик) -->
     <v-circle
       :config="{
@@ -46,7 +43,6 @@
         listening: false,
       }"
     />
-
     <!-- 3. АВАТАР -->
     <v-group>
       <v-image
@@ -61,10 +57,9 @@
           strokeWidth: 1,
         }"
       />
-
       <!-- НОВОЕ: Слой для "сочности" цветов (Overlay) -->
       <v-circle
-        v-if="item.active"
+        v-if="isHighlighted"
         :config="{
           radius: nodeSize / 3.2,
           fillRadialGradientStartRadius: 0,
@@ -82,6 +77,7 @@
 <script setup>
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
 import { useBoardgame } from '~/composables/game/useBoardgame';
+import { isOwnPicked } from '#shared/utils/rules/helpers';
 
 defineOptions({
   inheritAttrs: false,
@@ -104,10 +100,17 @@ const { client, G, ctx, activePlayer } = useBoardgame();
 
 const isHovered = ref(false);
 
+const isHighlighted = computed(() => {
+  if (isOwnPicked(G.value, item.id)) return true;
+  const ids = G.value?.highlightFighters;
+  if (!Array.isArray(ids)) return false;
+  return ids.map(String).includes(String(item.id));
+});
+
 const groupConfig = computed(() => {
   let scale = 1;
   if (isHovered.value) scale = 1.1;
-  if (item.active) scale = 1.15;
+  if (isHighlighted.value) scale = 1.15;
 
   return {
     x: position?.x || 0,
@@ -126,7 +129,6 @@ const groupConfig = computed(() => {
         stage.container().style.cursor = 'pointer';
       }
     },
-
     onMouseLeave: e => {
       isHovered.value = false;
       const stage = e.target.getStage();
