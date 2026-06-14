@@ -1,0 +1,38 @@
+{
+	"id": "medusa",
+	"heroes": [
+		{
+			"id": "medusa",
+			"name": "Медуза",
+			"hp": 16,
+			"move": 3,
+			"attackType": "ranged",
+			"attackRange": 1,
+			"size": 1,
+			"image": "avatar.webp"
+		}
+	],
+	"assistants": [
+		{
+			"id": "harpies",
+			"name": "Гарпии",
+			"count": 3,
+			"hp": 1,
+			"move": 3,
+			"attackType": "melee",
+			"attackRange": 1,
+			"size": 1,
+			"image": "harpies.webp"
+		}
+	],
+	"skill": {
+		"id": "medusa_skill",
+		"title": "Взгляд Медузы",
+		"trigger": "start_turn",
+		"text": "Начало хода: вы можете нанести 1 урон вражескому бойцу в одной области с Медузой."
+	},
+	"cards": {
+		"cardBack": "assets/card_back.webp",
+		"cardsDir": "assets/cards/"
+	}
+}

@@ -9,7 +9,8 @@
 <script setup>
 import { useBoardgame } from '~/composables/game/useBoardgame';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
-import { useAppStore } from '~/store/app.js';
+import { CELL_HIGHLIGHTS } from '#shared/constants/highlights';
+import { getOwnPickedId } from '#shared/utils/rules/helpers';
 
 defineOptions({
   inheritAttrs: false,
@@ -25,7 +26,6 @@ const emit = defineEmits(['select']);
 const isHovered = ref(false);
 const { client, activePlayer, G, ctx } = useBoardgame();
 const { dragItem } = useGlobalDrag();
-const appStore = useAppStore();
 
 watch(dragItem, newItem => {
   if (newItem) {
@@ -63,7 +63,7 @@ const hoverConfig = computed(() => ({
   opacity: 0.2,
 }));
 
-const highlightings = appStore.glossary?.meta?.highlighting;
+const highlightings = CELL_HIGHLIGHTS;
 
 const isHighlighted = computed(() => {
   const id = String(props.node.id);
@@ -105,11 +105,13 @@ const highlightConfig = computed(() => ({
 
 const handlePointerClick = e => {
   if (e.cancelBubble !== undefined) e.cancelBubble = true;
-  const activeFighter = activePlayer.value?.fighters?.find(i => i.active);
-  if (!activeFighter) return;
-  if (client.value?.moves?.moveFighter) {
-    const activeFighter = activePlayer.value?.fighters?.find(i => i.active);
-    client.value?.moves?.moveFighter({ fighterId: activeFighter.id, targetId: props.node.id });
+  const pickedId = getOwnPickedId(G.value);
+  if (!pickedId) return;
+  const phase = currentPhase.value;
+  if (phase === 'MOVEMENT' && client.value?.moves?.moveFighter) {
+    client.value.moves.moveFighter({ fighterId: pickedId, targetId: props.node.id });
+  } else if (phase === 'UNIT_PLACEMENT' && client.value?.moves?.placeUnit) {
+    client.value.moves.placeUnit({ unitId: pickedId, circleId: Number(props.node.id) });
   }
   emit('select', e, props.node.id);
 };

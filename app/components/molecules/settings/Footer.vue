@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { useAppStore } from '~/store/app';
+import { PLAYER_TYPES } from '#shared/constants/playerTypes';
 
 const {players, map} = defineProps({
   players: { type: Array, default: () => [] },
@@ -32,11 +32,10 @@ const {players, map} = defineProps({
   isReady: { type: Boolean, default: false }
 });
 
-const { glossary } = storeToRefs(useAppStore());
 defineEmits(['start']);
 
-const human = computed(() => glossary.value?.meta?.players?.[0]);
-const hasPlayer = computed(() => players.some(i => i.type === human.value?.id));
+const human = PLAYER_TYPES.HUMAN;
+const hasPlayer = computed(() => players.some(i => i.type === human.id));
 const isValidSelection = computed(() => players.length > 1 && map && hasPlayer.value);
 
 const footerStyles = tv({

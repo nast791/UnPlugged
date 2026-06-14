@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "heroes": [
+    {
+      "id": "medusa",
+      "name": "Медуза",
+      "folder": "heroes/medusa/",
+      "main": "index.json",
+      "image": "avatar.webp",
+      "color": "#7DB95F",
+      "deck": "cards.json"
+    },
+    {
+      "id": "tesla",
+      "name": "Никола Тесла",
+      "folder": "heroes/tesla/",
+      "main": "index.json",
+      "image": "avatar.webp",
+      "color": "#D57264",
+      "deck": "cards.json"
+    }
+  ],
+  "maps": [
+    {
+      "id": "alchemy",
+      "name": "Алхимия",
+      "folder": "maps/alchemy/",
+      "main": "index.json",
+      "image": "background.webp",
+      "players": 4
+    }
+  ]
+}

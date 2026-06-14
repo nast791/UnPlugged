@@ -1,37 +1,39 @@
-import { activePlayer, addLog } from '#shared/utils/actions/utils';
-import { placeUnit, finishUnitPlacement, autoPlaceAI, getAvailableCells } from '#shared/utils/actions/placement';
+import { runMove } from '../rules/moves.js';
+import { runFact } from '../rules/facts.js';
+import { getActivePlayer } from '../rules/helpers.js';
+import { INVALID_MOVE } from '#boardgame/core';
 
 export const placementPhase = {
-  onEnd: ({ G, events }) => {
-    addLog(G, 'Все бойцы расставлены. Начинаем игру!');
+  next: 'START_GAME',
+  onEnd: ({ G, ctx }) => {
+    runMove('LOG', { G, ctx }, { message: 'Все бойцы расставлены. Начинаем игру!' });
   },
   turn: {
     onBegin: ({ G, ctx, events }) => {
       const allPlaced = G.players.every(p => p.fighters.every(f => f.position !== null));
       if (allPlaced) {
-        events.setPhase('TURN_START');
-        return;
+        return runMove('END_PHASE', { G, events });
       }
 
-      const player = activePlayer({ G, ctx });
+      const player = getActivePlayer(G, ctx);
 
       if (player.type === 'human') {
-        addLog(G, `Игрок ${player.name}: расставьте бойцов`);
+        runMove('LOG', { G, ctx }, { message: `Игрок ${player.name}: расставьте бойцов` });
       } else {
-        addLog(G, `Игрок ${player.name} расставляет силы...`);
-        autoPlaceAI({ G, ctx, events });
+        runMove('LOG', { G, ctx }, { message: `Игрок ${player.name} расставляет силы...` });
+        runMove('AUTO_PLACE_AI', { G, ctx, events });
       }
     },
   },
   moves: {
     getAvailableCells: ({ G, ctx }, { fighterId }) => {
-      G.highlightCells = getAvailableCells({ G, ctx, fighterId });
+      G.highlightCells = runFact('PLACEMENT_CELLS', { fighterId }, { G, ctx });
     },
-    placeUnit: ({ G, ctx }, { unitId, circleId }) => {
-      return placeUnit({ G, ctx, unitId, circleId });
+    placeUnit: (playCtx, { unitId, circleId }) => {
+      if (!runMove('PLACE_FIGHTER', playCtx, { unitId, circleId })) return INVALID_MOVE;
     },
-    finishUnitPlacement: ({ G, ctx, events }) => {
-      return finishUnitPlacement({ G, ctx, events });
+    finishUnitPlacement: playCtx => {
+      runMove('FINISH_PLACEMENT', playCtx);
     },
   },
 };

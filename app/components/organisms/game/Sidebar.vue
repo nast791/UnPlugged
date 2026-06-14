@@ -9,7 +9,7 @@
           :key="player.id"
           class="relative flex flex-col gap-12 transition-all"
           :class="[
-            +player.index === +activePlayerIndex
+            String(player.id) === String(activePlayerIndex)
               ? 'opacity-100 scale-100'
               : 'opacity-70 scale-[0.98]',
           ]"
@@ -90,14 +90,12 @@ import Resources from '~/components/molecules/sidebar/Resources.vue';
 import Card from '~/components/molecules/sidebar/Card.vue';
 import Console from '~/components/molecules/sidebar/Console.vue';
 import Window from '~/components/atoms/Window.vue';
-import { useAppStore } from '~/store/app.js';
+import { DECK_LABELS } from '#shared/constants/decks';
 import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const emit = defineEmits(['showStats', 'openDiscard', 'zoomEffect']);
 const { client, G, ctx } = useBoardgame();
-const { glossary } = storeToRefs(useAppStore());
-
-const decks = computed(() => glossary?.value?.meta?.decks || {});
+const decks = DECK_LABELS;
 const players = computed(() => G.value?.players || []);
 const activePlayerIndex = computed(() => ctx.value?.currentPlayer);
 

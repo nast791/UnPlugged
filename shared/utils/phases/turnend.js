@@ -1,47 +1,63 @@
-import { activePlayer, addLog, drawCards, discardSelected } from "#shared/utils/actions/utils";
-import { INVALID_MOVE } from 'boardgame.io/core';
+import { runMove } from '../rules/moves.js';
+import { getActivePlayer } from '../rules/helpers.js';
+import { INVALID_MOVE } from '#boardgame/core';
+import { EFFECT_TRIGGERS } from '../../constants/triggers.js';
+import { runHeroSkills } from './turnstart.js';
 
 export const turnEnd = {
-  next: 'TURN_START', 
+  next: 'TURN_START',
+  turn: {
+    onBegin: ({ G, ctx, events }) => {
+      return events.endTurn();
+    },
+    onEnd: ({ G, ctx, events }) => {
+      return runMove('END_PHASE', { G, events });
+    },
+  },
   onBegin: ({ G, ctx, events }) => {
-    const player = activePlayer({ G, ctx });
+    G.selectedAction = null;
+    const player = getActivePlayer(G, ctx);
 
     player.fighters.forEach(f => {
       f.bonusMovement = 0;
       f.canPassThroughEnemies = false;
     });
 
+    if (runHeroSkills({ G, ctx, events }, EFFECT_TRIGGERS.END_TURN, { pendingOnly: true })) {
+      return;
+    }
+
     const minSize = player.hero?.minHandSize || 0;
     if (player.hand.length < minSize) {
       const count = minSize - player.hand.length;
-      addLog(G, `${player.name}: добор до ${minSize} карт.`);
-      drawCards({ G, player, count });
+      runMove('LOG', { G, ctx }, { message: `${player.name}: добор до ${minSize} карт.` });
+      runMove('DRAW_CARDS', { G, ctx }, { player, count });
     }
 
     const maxHand = player.hero?.maxHandSize || 7;
-    if (player.hand.length <= maxHand) {
-      events.endTurn();
-    } else {
+    if (player.hand.length > maxHand) {
       const count = player.hand.length - maxHand;
-      G.pendingActions = [{
-        id: 'hand-limit-discard',
-        text: `Сбросить лишние (${count})`,
-        action: 'confirmDiscard',
-        payload: { count }
-      }];
+      G.pendingActions = [
+        {
+          id: 'hand-limit-discard',
+          text: `Сбросить лишние (${count})`,
+          action: 'confirmDiscard',
+          payload: { count },
+        },
+      ];
     }
   },
   moves: {
     confirmDiscard: ({ G, ctx, events }, { count }) => {
-      const player = activePlayer({ G, ctx });
+      const player = getActivePlayer(G, ctx);
       const selected = player.hand.filter(c => c.isSelected);
 
       if (selected.length !== count) {
-        addLog(G, `Не выбрано ${count} карт для сброса`, 'danger');
-        return INVALID_MOVE; 
+        runMove('LOG', { G, ctx }, { message: `Не выбрано ${count} карт для сброса`, type: 'danger' });
+        return INVALID_MOVE;
       }
-      discardSelected({ G, player });
-      events.endTurn();
-    }
-  }
-}
+      runMove('DISCARD_CARDS', { G, ctx }, { player });
+      G.pendingActions = [];
+    },
+  },
+};
