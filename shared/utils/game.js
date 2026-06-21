@@ -5,37 +5,27 @@ import { turnStart } from './phases/turnstart.js';
 import { actionSelection } from './phases/actionselection.js';
 import { movement } from './phases/movement.js';
 import { attack } from './phases/attack.js';
+import { defense } from './phases/defense.js';
 import { effect } from './phases/effect.js';
 import { turnEnd } from './phases/turnend.js';
-import { applyOwnFighterPhaseCells, findFighter, getActivePlayer } from './rules/helpers.js';
-import { TurnOrder } from '#boardgame/core';
-import { pickPipelineTarget, submitPipelineInput } from './rules/pipeline.js';
-import { runEvent } from './rules/events.js';
+import { TurnOrder, INVALID_MOVE } from '#boardgame/core';
 import { runMove } from './rules/moves.js';
+
+const asMove = (name, mapPayload) => (playCtx, payload) => {
+  const params = mapPayload ? mapPayload(payload) : payload;
+  if (runMove(name, playCtx, params) === false) return INVALID_MOVE;
+};
 
 const sharedMoves = {
   clearHighlights: playCtx => runMove('CLEAR_HIGHLIGHTS', playCtx),
-  clearOwnSelection: playCtx => {
-    const { G, ctx } = playCtx;
-    runEvent(G, ctx, 'SELECT_OWN_FIGHTER', { clear: true });
-  },
-  selectOwnFighter: (playCtx, payload) => {
-    const { G, ctx } = playCtx;
-    if (G.outputVar && G.targetSelection?.kind === 'effect') {
-      const fighter = findFighter(G, payload.fighterId);
-      if (!fighter || fighter.hp <= 0) return 'INVALID_MOVE';
-      if (!pickPipelineTarget(playCtx, payload.fighterId)) return 'INVALID_MOVE';
-      runMove('LOG', { G, ctx }, { message: `Выбрана цель: ${fighter.name}` });
-      return;
-    }
-    const player = getActivePlayer(G, ctx);
-    const fighter = player.fighters.find(f => String(f.id) === String(payload.fighterId));
-    if (!fighter || fighter.hp <= 0) return 'INVALID_MOVE';
-    runEvent(G, ctx, 'SELECT_OWN_FIGHTER', { fighterId: payload.fighterId });
-    applyOwnFighterPhaseCells(playCtx);
-  },
-  toggleActiveFighter: (playCtx, payload) => sharedMoves.selectOwnFighter(playCtx, payload),
-  setVariables: (playCtx, payload) => submitPipelineInput(playCtx, payload) || 'INVALID_MOVE',
+  clearOwnSelection: playCtx => runMove('CLEAR_OWN_SELECTION', playCtx),
+  selectTarget: asMove('SELECT_TARGET'),
+  selectCard: asMove('SELECT_CARD'),
+  selectHandCard: asMove('SELECT_CARD'),
+  selectRevealedCard: asMove('SELECT_CARD'),
+  selectOpponentPlayer: asMove('SELECT_OPPONENT_PLAYER'),
+  selectCell: asMove('SELECT_CELL'),
+  setVariables: asMove('SUBMIT_PIPELINE_INPUT'),
 };
 
 const createPhase = config => ({
@@ -88,6 +78,7 @@ export const game = {
     [GAME_PHASES.ACTION_SELECTION]: createPhase(actionSelection),
     [GAME_PHASES.MOVEMENT]: createPhase(movement),
     [GAME_PHASES.ATTACK]: createPhase(attack),
+    [GAME_PHASES.DEFENSE]: createPhase(defense),
     [GAME_PHASES.EFFECT]: createPhase(effect),
     [GAME_PHASES.TURN_END]: createPhase(turnEnd),
   },

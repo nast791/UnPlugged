@@ -58,12 +58,12 @@ const { title, isOpen } = defineProps({
 const { width: windowW, height: windowH } = useWindowSize();
 
 const storageKey = computed(() => `window-rect-${title || 'default'}`);
-const windowRect = useStorage(storageKey.value, {
+const windowRect = useStorage(storageKey, {
   x: 100,
   y: 100,
   width: 900,
   height: 300,
-});
+}, undefined, { initOnMounted: true });
 
 const emits = defineEmits(['close', 'focus']);
 

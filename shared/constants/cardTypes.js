@@ -25,4 +25,12 @@ export const CARD_TYPES = [
   },
 ];
 
+/** В каких фазах можно сыграть карту как основную (не бонус). */
+export const CARD_PLAY_PHASES = {
+  attack: ['ATTACK'],
+  defense: ['DEFENSE'],
+  effect: ['EFFECT'],
+  hybrid: ['ATTACK', 'DEFENSE'],
+};
+
 export const getCardType = typeId => CARD_TYPES.find(c => c.id === typeId) ?? {};

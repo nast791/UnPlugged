@@ -1,23 +1,26 @@
 import { runMove } from '../rules/moves.js';
-import { getActivePlayer } from '../rules/helpers.js';
+import { getActivePlayer, resolvePlayer } from '../rules/helpers.js';
 import { EFFECT_TRIGGERS } from '../../constants/triggers.js';
-import { getSkillHooks, getHookActions } from '../skills/registry.js';
 import { evaluateTrigger, startPipeline } from '../rules/pipeline.js';
+
+const getHookActions = hook => hook.actions ?? hook.event?.params?.actions;
 
 export const runHeroSkills = (
   { G, ctx, events },
   trigger,
   { playerId, pendingOnly = false } = {},
 ) => {
-  const ownerId = playerId ?? ctx.currentPlayer;
+  const ownerId = String(playerId ?? ctx.currentPlayer);
   const ownerCtx = { ...ctx, currentPlayer: ownerId };
+  const player = resolvePlayer(G, ownerCtx, { playerId: ownerId });
+  const hooks = (player?.skill?.triggers ?? []).filter(h => h.trigger === trigger);
 
-  for (const { skill, hook } of getSkillHooks(G, trigger, ownerId)) {
+  for (const hook of hooks) {
     if (!evaluateTrigger(trigger, hook, G, ownerCtx)) continue;
 
     const actions = getHookActions(hook);
     if (actions?.length) {
-      startPipeline(G, ownerCtx, events, actions, skill.id);
+      startPipeline(G, ownerCtx, events, actions, player.skill.id);
       return pendingOnly ? G.pipeline !== null : true;
     }
   }
@@ -38,13 +41,13 @@ export const turnStart = {
   turn: {
     onBegin: ({ G, ctx, events }) => {
       const player = getActivePlayer(G, ctx);
-      const isHeroAlive = player.fighters.some(f => f.type === 'hero' && f.hp > 0);
+      const isHeroAlive = player.fighters.some(f => f.type === 'hero' && (f.currentHp ?? 0) > 0);
       if (!isHeroAlive) return events.endTurn();
     },
   },
   onBegin: ({ G, ctx, events }) => {
     const player = getActivePlayer(G, ctx);
-    const isHeroAlive = player.fighters.some(f => f.type === 'hero' && f.hp > 0);
+    const isHeroAlive = player.fighters.some(f => f.type === 'hero' && (f.currentHp ?? 0) > 0);
     if (!isHeroAlive) return;
 
     G.turn++;

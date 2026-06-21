@@ -18,13 +18,15 @@
     "clean": "npx nuxi cleanup",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:pipeline": "node shared/utils/rules/pipeline.test.mjs",
-    "test:skills": "node shared/utils/rules/skills.test.mjs",
-    "test:rules": "node shared/utils/rules/rules.test.mjs",
-    "test:game": "node shared/utils/game.test.mjs",
-    "test:integration": "node shared/utils/game.integration.test.mjs",
-    "test:phases": "node shared/utils/phases/phases.test.mjs",
-    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:game && yarn test:integration && yarn test:phases"
+    "test:pipeline": "node test/pipeline.test.mjs",
+    "test:skills": "node test/skills.test.mjs",
+    "test:rules": "node test/rules.test.mjs",
+    "test:game": "node test/game.test.mjs",
+    "test:integration": "node test/game.integration.test.mjs",
+    "test:phases": "node test/phases.test.mjs",
+    "test:cards": "node test/cards.test.mjs",
+    "test:tesla-cards": "node test/tesla-cards.test.mjs",
+    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:cards && yarn test:tesla-cards && yarn test:game && yarn test:integration && yarn test:phases"
   },
   "dependencies": {
     "@fontsource-variable/onest": "5.2.11",

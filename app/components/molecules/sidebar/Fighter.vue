@@ -9,7 +9,7 @@
     ]"
     :style="{ '--brand-color': player.color }"
     v-if="item && player"
-    @click.stop="client.moves.toggleActiveFighter({ fighterId: item.id })"
+    @click.stop="client.moves.selectTarget({ fighterId: item.id })"
   >
     <div class="flex flex-1 justify-between gap-24">
       <div class="flex flex-1 gap-8 items-center">
@@ -91,7 +91,7 @@ import Note from '~/components/molecules/sidebar/Note.vue';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
 import { useBoardgame } from '~/composables/game/useBoardgame';
-import { isOwnPicked } from '#shared/utils/rules/helpers';
+import { getOwnPickedId } from '#shared/utils/rules/helpers';
 
 const { group, item, player } = defineProps({
   item: { type: Object, default: null },
@@ -119,7 +119,7 @@ const isDraggable = computed(() => {
 
 const index = computed(() => group.findIndex(i => i.id === item.id));
 
-const isSelected = computed(() => isOwnPicked(G.value, item.id));
+const isSelected = computed(() => getOwnPickedId(G.value) === String(item.id));
 
 const rangeType = computed(() => {
   switch (item.rangeType) {
