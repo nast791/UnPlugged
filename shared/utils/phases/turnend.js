@@ -31,7 +31,7 @@ export const turnEnd = {
     if (player.hand.length < minSize) {
       const count = minSize - player.hand.length;
       runMove('LOG', { G, ctx }, { message: `${player.name}: добор до ${minSize} карт.` });
-      runMove('DRAW_CARDS', { G, ctx }, { player, count });
+      runMove('MOVE_CARDS', { G, ctx }, { player, count, from: 'deck', fromPosition: 'top', to: 'hand' });
     }
 
     const maxHand = player.hero?.maxHandSize || 7;
@@ -56,7 +56,7 @@ export const turnEnd = {
         runMove('LOG', { G, ctx }, { message: `Не выбрано ${count} карт для сброса`, type: 'danger' });
         return INVALID_MOVE;
       }
-      runMove('DISCARD_CARDS', { G, ctx }, { player });
+      runMove('MOVE_CARDS', { G, ctx }, { player, from: 'selected', count, to: 'discard' });
       G.pendingActions = [];
     },
   },

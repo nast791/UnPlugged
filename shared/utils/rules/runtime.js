@@ -34,22 +34,37 @@ export const normalizeOptions = options => {
 
 export const resolveOutput = (G, returnKey) => {
   const sel = G.targetSelection;
-  if (
-    returnKey &&
-    sel?.returnKey === returnKey &&
-    (G.vars?.[returnKey]?.length ?? 0) < sel.selection
-  ) {
-    G.outputVar = returnKey;
-    return { status: 'pending', return: returnKey };
+  if (returnKey && sel?.returnKey === returnKey) {
+    const val = G.vars?.[returnKey];
+    const pending =
+      (sel.kind === 'card' || sel.kind === 'hand' || sel.kind === 'revealed' || sel.kind === 'opponent') &&
+      sel.selection === 1
+        ? isEmpty(val)
+        : (Array.isArray(val) ? val.length : 0) < sel.selection;
+    if (pending) {
+      G.outputVar = returnKey;
+      return { status: 'pending', return: returnKey };
+    }
   }
-  if (!returnKey || !isEmpty(G.vars?.[returnKey])) {
+  const val = returnKey ? G.vars?.[returnKey] : undefined;
+  const awaitingPrompt =
+    returnKey &&
+    isEmpty(val) &&
+    G.pendingActions?.some(
+      a =>
+        a.action === 'setVariables' &&
+        a.payload?.vars?.some(v => v.var === returnKey),
+    );
+
+  if (!returnKey || !isEmpty(val) || !awaitingPrompt) {
     G.outputVar = null;
     return {
       status: 'done',
-      value: returnKey ? G.vars[returnKey] : undefined,
+      value: returnKey ? val : undefined,
       return: returnKey || undefined,
     };
   }
+
   G.outputVar = returnKey;
   return { status: 'pending', return: returnKey };
 };
@@ -81,4 +96,37 @@ export const storeReturn = (G, returnKey, value) => {
   if (!returnKey) return;
   if (!G.vars) G.vars = {};
   G.vars[returnKey] = value;
+};
+
+export const setGamePath = (G, path, value) => {
+  const key = String(path);
+  if (key.startsWith('$')) {
+    storeReturn(G, key, value);
+    return;
+  }
+  const parts = key.split('.');
+  let obj = G;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const segment = parts[i];
+    if (obj[segment] == null || typeof obj[segment] !== 'object') {
+      obj[segment] = {};
+    }
+    obj = obj[segment];
+  }
+  obj[parts[parts.length - 1]] = value;
+};
+
+export const removeGamePath = (G, path) => {
+  const key = String(path);
+  if (key.startsWith('$')) {
+    if (G.vars) delete G.vars[key];
+    return;
+  }
+  const parts = key.split('.');
+  let obj = G;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (obj[parts[i]] == null || typeof obj[parts[i]] !== 'object') return;
+    obj = obj[parts[i]];
+  }
+  delete obj[parts[parts.length - 1]];
 };

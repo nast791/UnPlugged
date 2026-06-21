@@ -77,7 +77,7 @@
 <script setup>
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
 import { useBoardgame } from '~/composables/game/useBoardgame';
-import { isOwnPicked } from '#shared/utils/rules/helpers';
+import { getOwnPickedId } from '#shared/utils/rules/helpers';
 
 defineOptions({
   inheritAttrs: false,
@@ -101,7 +101,7 @@ const { client, G, ctx, activePlayer } = useBoardgame();
 const isHovered = ref(false);
 
 const isHighlighted = computed(() => {
-  if (isOwnPicked(G.value, item.id)) return true;
+  if (getOwnPickedId(G.value) === String(item.id)) return true;
   const ids = G.value?.highlightFighters;
   if (!Array.isArray(ids)) return false;
   return ids.map(String).includes(String(item.id));
@@ -120,8 +120,8 @@ const groupConfig = computed(() => {
     width: nodeSize,
     height: nodeSize,
     listening: true,
-    onClick: () => client.value.moves.toggleActiveFighter({ fighterId: item.id }),
-    onTap: () => client.value.moves.toggleActiveFighter({ fighterId: item.id }),
+    onClick: () => client.value.moves.selectTarget({ fighterId: item.id }),
+    onTap: () => client.value.moves.selectTarget({ fighterId: item.id }),
     onMouseEnter: e => {
       isHovered.value = true;
       const stage = e.target.getStage();
@@ -143,14 +143,21 @@ const initFighter = async () => {
   if (!imageUrl) return;
   try {
     const img = await loadAsset(imageUrl);
+    if (cancelled) return;
     heroImg.value = img;
     await nextTick();
+    if (cancelled) return;
     const node = imageNode.value?.getNode();
     node?.getLayer()?.batchDraw();
   } catch (e) {
     console.error('Ошибка', e);
   }
 };
+
+let cancelled = false;
+onUnmounted(() => {
+  cancelled = true;
+});
 
 onMounted(initFighter);
 

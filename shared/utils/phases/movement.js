@@ -6,7 +6,7 @@ import { INVALID_MOVE } from '#boardgame/core';
 export const movement = {
   onBegin: ({ G, ctx }) => {
     const player = getActivePlayer(G, ctx);
-    runMove('DRAW_CARDS', { G, ctx }, { player, count: 1 });
+    runMove('MOVE_CARDS', { G, ctx }, { player, count: 1, from: 'deck', fromPosition: 'top', to: 'hand' });
     player.fighters.forEach(f => (f.startPosition = f.position));
     G.bonus = 0;
     G.bonusCards = [];

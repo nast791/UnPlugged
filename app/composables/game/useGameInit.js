@@ -30,8 +30,8 @@ export const useGameInit = () => {
         ...(player.heroes?.map(h => ({
           ...h,
           type: 'hero',
-          image: `${nuxtConfig.public.pack}${player.folder}${h.image}`,
           currentHp: h.hp,
+          image: `${nuxtConfig.public.pack}${player.folder}${h.image}`,
         })) || []),
         ...(player.assistants?.flatMap(a =>
           Array.from({ length: a.count || 1 }, (_, i) => ({

@@ -23,7 +23,7 @@ export const actionSelection = {
     if (runFact('CAN_PLAYER_ATTACK', {}, context)) {
       actions.push(toPendingAction('attack'));
     }
-    if (runFact('HAS_CARD_IN_HAND', { types: ['effect'] }, context)) {
+    if (runFact('CARDS_IN_HAND', { types: ['effect'], phase: 'EFFECT' }, context).length) {
       actions.push(toPendingAction('effect'));
     }
     G.pendingActions = actions;

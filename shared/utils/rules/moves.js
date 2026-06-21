@@ -1,7 +1,21 @@
 import { runEvent } from './events.js';
-import { getActivePlayer } from './helpers.js';
+import { findFighter, findHandCard, findPlayerCard, getActivePlayer, getOwnPickedId, resolvePlayer } from './helpers.js';
 import { runFact } from './facts.js';
+import { pickPipelineCard, pickPipelineCell, pickPipelineOpponentPlayer, pickPipelineTarget, submitPipelineInput } from './pipeline.js';
 import { ACTION_LABELS } from '../../constants/actions.js';
+
+export const applyOwnFighterPhaseCells = ({ G, ctx }) => {
+  const pickedId = getOwnPickedId(G);
+  if (!pickedId) {
+    G.highlightCells = [];
+    return;
+  }
+  if (ctx.phase === 'UNIT_PLACEMENT') {
+    G.highlightCells = runFact('PLACEMENT_CELLS', { fighterId: pickedId }, { G, ctx });
+  } else if (ctx.phase === 'MOVEMENT') {
+    G.highlightCells = runFact('MOVEMENT_CELLS', { fighterId: pickedId }, { G, ctx });
+  }
+};
 
 export const runMove = (name, playCtx, params) => {
   const def = MOVES[name];
@@ -53,22 +67,81 @@ export const MOVES = {
       runEvent(G, ctx, 'HIGHLIGHT_TARGETS');
     },
   },
-  DRAW_CARDS: {
-    run: (playCtx, params = {}) => {
+  CLEAR_OWN_SELECTION: {
+    run: playCtx => {
       const { G, ctx } = playCtx;
-      runEvent(G, ctx, 'DRAW_CARDS', { playerId: params.player.id, count: params.count ?? 1 });
+      runEvent(G, ctx, 'SELECT_TARGET', { clear: true });
+      return true;
     },
   },
-  DISCARD_CARDS: {
+  SELECT_TARGET: {
     run: (playCtx, params = {}) => {
       const { G, ctx } = playCtx;
-      return runEvent(G, ctx, 'DISCARD_CARDS', { params: { playerId: params.player.id }, raw: true }) ?? 0;
+      const fighterId = params.fighterId ?? params;
+      if (G.outputVar && G.targetSelection?.kind === 'target') {
+        const fighter = findFighter(G, fighterId);
+        if (!fighter || (fighter.currentHp ?? 0) <= 0) return false;
+        if (!pickPipelineTarget(playCtx, fighterId)) return false;
+        runMove('LOG', playCtx, { message: `Выбрана цель: ${fighter.name}` });
+        return true;
+      }
+      const player = getActivePlayer(G, ctx);
+      const fighter = player.fighters.find(f => String(f.id) === String(fighterId));
+      if (!fighter || (fighter.currentHp ?? 0) <= 0) return false;
+      runEvent(G, ctx, 'SELECT_TARGET', { fighterId });
+      applyOwnFighterPhaseCells(playCtx);
+      return true;
     },
   },
-  RETURN_FROM_DISCARD: {
+  SELECT_CARD: {
+    run: (playCtx, params) => {
+      const cardId = typeof params === 'object' ? params?.cardId : params;
+      const { G, ctx } = playCtx;
+      const ownerId = G.targetSelection?.playerId;
+      if (!pickPipelineCard(playCtx, cardId)) return false;
+      const player =
+        ownerId != null
+          ? resolvePlayer(G, ctx, { playerId: ownerId })
+          : getActivePlayer(G, ctx);
+      const found = findPlayerCard(player, G, cardId, ['hand', 'deck', 'revealed', 'discard']);
+      if (found?.card) {
+        runMove('LOG', playCtx, {
+          message: `Выбрана карта: ${found.card.title || found.card.name}`,
+        });
+      }
+      return true;
+    },
+  },
+  SELECT_OPPONENT_PLAYER: {
+    run: (playCtx, params) => {
+      const playerId = typeof params === 'object' ? params?.playerId : params;
+      const { G, ctx } = playCtx;
+      if (!pickPipelineOpponentPlayer(playCtx, playerId)) return false;
+      const player = resolvePlayer(G, ctx, { playerId });
+      if (player) {
+        runMove('LOG', playCtx, { message: `Выбран оппонент: ${player.name}` });
+      }
+      return true;
+    },
+  },
+  SELECT_CELL: {
+    run: (playCtx, params) => {
+      const cellId = typeof params === 'object' ? params?.cellId ?? params?.targetId : params;
+      return pickPipelineCell(playCtx, cellId);
+    },
+  },
+  SUBMIT_PIPELINE_INPUT: {
+    run: (playCtx, params) => submitPipelineInput(playCtx, params),
+  },
+  MOVE_CARDS: {
     run: (playCtx, params = {}) => {
       const { G, ctx } = playCtx;
-      runEvent(G, ctx, 'RETURN_FROM_DISCARD', { playerId: params.player.id, cardIds: params.cardIds });
+      const { player, ...rest } = params;
+      const eventParams = {
+        ...rest,
+        playerId: rest.playerId ?? player?.id,
+      };
+      return runEvent(G, ctx, 'MOVE_CARDS', { params: eventParams, raw: true }) ?? 0;
     },
   },
   CHECK_GAME_OVER: {
@@ -103,15 +176,22 @@ export const MOVES = {
       if (!card || G.bonusCards?.length) return false;
 
       if (
-        !runEvent(G, ctx, 'DISCARD_CARD', {
-          params: { playerId: player.id, cardId: params.cardId, log: false },
+        !runEvent(G, ctx, 'MOVE_CARDS', {
+          params: {
+            playerId: player.id,
+            from: 'hand',
+            targets: params.cardId,
+            count: 1,
+            to: 'discard',
+            log: false,
+          },
           raw: true,
         })
       ) {
         return false;
       }
-      runEvent(G, ctx, 'SET_MOVEMENT_BONUS', {
-        params: { value: card.bonus || 0, cardId: params.cardId },
+      runEvent(G, ctx, 'ADD_BONUS', {
+        params: { scope: 'movement', value: card.bonus || 0, cardId: params.cardId },
         raw: true,
       });
       runMove('LOG', playCtx, {
@@ -132,16 +212,23 @@ export const MOVES = {
       if (!topDiscardCard || topDiscardCard.id !== lastBonusCardId) return false;
 
       if (
-        !runEvent(G, ctx, 'RESTORE_DISCARD_CARD', {
-          params: { playerId: player.id, cardId: lastBonusCardId },
+        !runEvent(G, ctx, 'MOVE_CARDS', {
+          params: {
+            playerId: player.id,
+            from: 'discard',
+            targets: lastBonusCardId,
+            count: 1,
+            to: 'hand',
+            log: false,
+          },
           raw: true,
         })
       ) {
         return false;
       }
-      runEvent(G, ctx, 'SET_MOVEMENT_BONUS', { params: { clear: true }, raw: true });
+      runEvent(G, ctx, 'ADD_BONUS', { params: { scope: 'movement', clear: true }, raw: true });
       runMove('CLEAR_HIGHLIGHTS', playCtx);
-      runEvent(G, ctx, 'SELECT_OWN_FIGHTER', { clear: true });
+      runEvent(G, ctx, 'SELECT_TARGET', { clear: true });
       runEvent(G, ctx, 'RESET_FIGHTERS_POSITIONS', {
         params: { playerId: player.id, log: false },
         raw: true,
@@ -181,7 +268,7 @@ export const MOVES = {
   CONFIRM_MOVEMENT: {
     run: playCtx => {
       const { G, ctx } = playCtx;
-      runEvent(G, ctx, 'SET_MOVEMENT_BONUS', { params: { clear: true }, raw: true });
+      runEvent(G, ctx, 'ADD_BONUS', { params: { scope: 'movement', clear: true }, raw: true });
       runMove('END_PHASE', playCtx);
       return true;
     },

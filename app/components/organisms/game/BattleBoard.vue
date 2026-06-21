@@ -10,4 +10,7 @@
 <script setup>
 import Map from '~/components/organisms/game/Map.vue';
 import Sidebar from '~/components/organisms/game/Sidebar.vue';
+import { destroyBoardgameClient } from '~/composables/game/useBoardgame';
+
+onUnmounted(destroyBoardgameClient);
 </script>

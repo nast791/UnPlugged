@@ -2,7 +2,7 @@ import { runMove } from '../rules/moves.js';
 import { getActivePlayer } from '../rules/helpers.js';
 import { ensureCombatDefaults, resolveCombatPowers } from '../combat.js';
 
-export const attack = {
+export const defense = {
   onBegin: ({ G }) => {
     ensureCombatDefaults(G);
   },
