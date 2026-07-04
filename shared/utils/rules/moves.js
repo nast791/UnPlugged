@@ -27,7 +27,12 @@ export const MOVES = {
   LOG: {
     run: (playCtx, params = {}) => {
       const { G, ctx } = playCtx;
-      runEvent(G, ctx, 'LOG', { message: params.message, type: params.type || 'info' });
+      runEvent(G, ctx, 'LOG', {
+        message: params.message,
+        type: params.type || 'info',
+        audience: params.audience,
+        playerId: params.playerId,
+      });
     },
   },
   END_PHASE: {
@@ -43,6 +48,7 @@ export const MOVES = {
       const player = getActivePlayer(G, ctx);
       runMove('LOG', playCtx, {
         message: `${player.name} выбирает действие ${ACTION_LABELS[params.actionId]}`,
+        audience: 'private',
       });
       G.selectedAction = params.actionId;
       runMove('END_PHASE', playCtx);
@@ -82,7 +88,7 @@ export const MOVES = {
         const fighter = findFighter(G, fighterId);
         if (!fighter || (fighter.currentHp ?? 0) <= 0) return false;
         if (!pickPipelineTarget(playCtx, fighterId)) return false;
-        runMove('LOG', playCtx, { message: `Выбрана цель: ${fighter.name}` });
+        runMove('LOG', playCtx, { message: `Выбрана цель: ${fighter.name}`, audience: 'private' });
         return true;
       }
       const player = getActivePlayer(G, ctx);
@@ -107,6 +113,7 @@ export const MOVES = {
       if (found?.card) {
         runMove('LOG', playCtx, {
           message: `Выбрана карта: ${found.card.title || found.card.name}`,
+          audience: 'private',
         });
       }
       return true;
@@ -119,7 +126,7 @@ export const MOVES = {
       if (!pickPipelineOpponentPlayer(playCtx, playerId)) return false;
       const player = resolvePlayer(G, ctx, { playerId });
       if (player) {
-        runMove('LOG', playCtx, { message: `Выбран оппонент: ${player.name}` });
+        runMove('LOG', playCtx, { message: `Выбран оппонент: ${player.name}`, audience: 'private' });
       }
       return true;
     },

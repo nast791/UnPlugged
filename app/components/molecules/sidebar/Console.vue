@@ -18,9 +18,9 @@
         <div v-for="(item, index) in history" :key="item.id" class="group">
           <div
             class="flex gap-8 items-start text-16 leading-snug"
-            :class="[index === history?.length - 1 ? 'text-white' : 'text-slate-400']"
+            :class="logLineClass(item, index)"
           >
-            <span>[{{ item.time }}]</span>
+            <span class="shrink-0 opacity-70">[{{ item.time }}]</span>
             <div>
               {{ item.msg }}
             </div>
@@ -48,7 +48,29 @@ import { useBoardgame } from '~/composables/game/useBoardgame';
 
 const { client, G, ctx, activePlayer } = useBoardgame();
 const turnCount = computed(() => G.value?.turn || 0);
-const history = computed(() => G.value?.log || []);
+const history = computed(() => {
+  const state = G.value;
+  if (!state) return [];
+
+  const pub = (state.log ?? []).map(entry => ({ ...entry, audience: 'public' }));
+  const priv = (state.privateLog ?? []).map(entry => ({ ...entry, audience: 'private' }));
+  return [...pub, ...priv].sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+});
+
+/** Публичные — тёплый amber (события стола); приватные — белый / slate (подсказки). */
+const logLineClass = (item, index) => {
+  const isLatest = index === history.value.length - 1;
+  const isPublic = item.audience === 'public';
+  const isDanger = item.type === 'danger';
+
+  if (isPublic) {
+    if (isDanger) return isLatest ? 'text-rose-300' : 'text-rose-400/75';
+    return isLatest ? 'text-amber-200' : 'text-amber-400/70';
+  }
+
+  if (isDanger) return isLatest ? 'text-rose-400' : 'text-rose-500/65';
+  return isLatest ? 'text-white' : 'text-slate-400';
+};
 const actions = computed(() => G.value?.pendingActions || []);
 
 const scrollAreaRef = ref(null);

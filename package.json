@@ -26,7 +26,8 @@
     "test:phases": "node test/phases.test.mjs",
     "test:cards": "node test/cards.test.mjs",
     "test:tesla-cards": "node test/tesla-cards.test.mjs",
-    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:cards && yarn test:tesla-cards && yarn test:game && yarn test:integration && yarn test:phases"
+    "test:logging": "node test/logging.test.mjs",
+    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:logging && yarn test:cards && yarn test:tesla-cards && yarn test:game && yarn test:integration && yarn test:phases"
   },
   "dependencies": {
     "@fontsource-variable/onest": "5.2.11",

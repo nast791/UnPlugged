@@ -18,7 +18,10 @@ export const placementPhase = {
       const player = getActivePlayer(G, ctx);
 
       if (player.type === 'human') {
-        runMove('LOG', { G, ctx }, { message: `Игрок ${player.name}: расставьте бойцов` });
+        runMove('LOG', { G, ctx }, {
+          message: `Игрок ${player.name}: расставьте бойцов`,
+          audience: 'private',
+        });
       } else {
         runMove('LOG', { G, ctx }, { message: `Игрок ${player.name} расставляет силы...` });
         runMove('AUTO_PLACE_AI', { G, ctx, events });

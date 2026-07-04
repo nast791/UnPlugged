@@ -1,13 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { EFFECT_TRIGGERS } from '../shared/constants/triggers.js';
 import { evaluateCardTrigger, evaluateTrigger, pickPipelineCard, pickPipelineCell, pickPipelineTarget, startPipeline, submitPipelineInput } from '../shared/utils/rules/pipeline.js';
 import { runFact } from '../shared/utils/rules/facts.js';
 import { assert, makeCtx, makeMap, mockEvents, withCurrentHp } from './fixtures.mjs';
+import { loadHeroCards } from './packLoader.mjs';
 
-const cardsPath = join(dirname(fileURLToPath(import.meta.url)), '../shared/mocks/medusa-cards.json');
-const medusaCards = JSON.parse(readFileSync(cardsPath, 'utf8'));
+const medusaCards = loadHeroCards('medusa');
 const medusa01 = medusaCards.find(c => c.id === 'medusa_01');
 const medusa02 = medusaCards.find(c => c.id === 'medusa_02');
 const medusa03 = medusaCards.find(c => c.id === 'medusa_03');

@@ -181,7 +181,8 @@ export const advancePipeline = playCtx => {
 
     const { step, key: stepKey } = next;
     const result = runEvent(G, playCtx.ctx, step.type, {
-      params: step.params,
+      params:
+        step.type === 'LOG' ? { audience: 'private', ...step.params } : step.params,
       return: step.return,
     });
     G.pipeline.started = true;

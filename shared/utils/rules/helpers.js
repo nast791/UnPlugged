@@ -406,10 +406,7 @@ export const placePlayerCards = (player, cards, dest) => {
   }
 };
 
-export const pushLog = (G, msg, type = 'info') => {
-  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  G.log.push({ msg, type, time });
-};
+export { mergeLogsForPlayer, pushLog, pushPrivateLog, pushPublicLog } from './logging.js';
 
 export const applyTemplate = (message, template = {}) => {
   let msg = message || '';

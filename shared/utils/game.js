@@ -10,6 +10,7 @@ import { effect } from './phases/effect.js';
 import { turnEnd } from './phases/turnend.js';
 import { TurnOrder, INVALID_MOVE } from '#boardgame/core';
 import { runMove } from './rules/moves.js';
+import { applyPlayerView } from './rules/logging.js';
 
 const asMove = (name, mapPayload) => (playCtx, payload) => {
   const params = mapPayload ? mapPayload(payload) : payload;
@@ -53,6 +54,8 @@ export const game = {
       bonusCards: [],
       turn: 0,
       log: [],
+      privateLog: [],
+      logSeq: 0,
       pendingActions: [],
       winner: false,
       highlightCells: [],
@@ -68,6 +71,7 @@ export const game = {
       return { winner: G.winner };
     }
   },
+  playerView: ({ G, ctx, playerID }) => applyPlayerView(G, ctx, playerID),
   phases: {
     [GAME_PHASES.UNIT_PLACEMENT]: {
       ...createPhase(placementPhase),

@@ -12,6 +12,7 @@ export const movement = {
     G.bonusCards = [];
     runMove('LOG', { G, ctx }, {
       message: 'Выберите карту для усиления или перемещайте бойцов',
+      audience: 'private',
     });
     runMove('REFRESH_MOVEMENT_UI', { G, ctx });
   },

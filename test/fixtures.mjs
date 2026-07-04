@@ -64,6 +64,8 @@ export const makeG = (overrides = {}) => ({
   bonus: 0,
   bonusCards: [],
   log: [],
+  privateLog: [],
+  logSeq: 0,
   pendingActions: [],
   highlightCells: [],
   highlightFighters: [],

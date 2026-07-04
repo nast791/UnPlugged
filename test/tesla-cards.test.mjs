@@ -1,15 +1,12 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { ITEM_STATES } from '../shared/constants/items.js';
 import { EFFECT_TRIGGERS } from '../shared/constants/triggers.js';
 import { evaluateCardTrigger, evaluateTrigger, pickPipelineCell, pickPipelineTarget, startPipeline, submitPipelineInput } from '../shared/utils/rules/pipeline.js';
 import { runFact } from '../shared/utils/rules/facts.js';
 import { getAttackerPower } from '../shared/utils/combat.js';
 import { assert, makeCtx, makeMap, mockEvents, withCurrentHp } from './fixtures.mjs';
+import { loadHeroCards } from './packLoader.mjs';
 
-const cardsPath = join(dirname(fileURLToPath(import.meta.url)), '../shared/mocks/tesla-cards.json');
-const teslaCards = JSON.parse(readFileSync(cardsPath, 'utf8'));
+const teslaCards = loadHeroCards('tesla');
 const tesla01 = teslaCards.find(c => c.id === 'tesla_01');
 const tesla02 = teslaCards.find(c => c.id === 'tesla_02');
 const tesla03 = teslaCards.find(c => c.id === 'tesla_03');

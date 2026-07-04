@@ -40,7 +40,12 @@ import { runFact } from './facts.js';
 export const EVENTS = {
   LOG: {
     run: (G, ctx, params) => {
-      pushLog(G, applyTemplate(params.message, params.template), params.type || 'info');
+      pushLog(G, applyTemplate(params.message, params.template), {
+        type: params.type || 'info',
+        audience: params.audience ?? 'public',
+        playerId: params.playerId,
+        ctx,
+      });
       return null;
     },
   },
@@ -231,6 +236,7 @@ export const EVENTS = {
           storeReturn(G, returnKey, selection === 1 ? '' : []);
           EVENTS.LOG.run(G, ctx, {
             message: params.message || 'Карта на показе',
+            audience: 'private',
           });
           return returnKey;
         }
@@ -239,6 +245,7 @@ export const EVENTS = {
         storeReturn(G, returnKey, selection === 1 ? picked[0] : picked);
         EVENTS.LOG.run(G, ctx, {
           message: params.message || `Выбрано ${picked.length} карт(ы)`,
+          audience: 'private',
         });
         return null;
       }
@@ -257,6 +264,7 @@ export const EVENTS = {
         message:
           params.message ||
           (selection > 1 ? `Выберите ${selection} карты` : 'Выберите карту'),
+        audience: 'private',
       });
 
       return returnKey;
@@ -281,6 +289,7 @@ export const EVENTS = {
         storeReturn(G, returnKey, String(player.id));
         EVENTS.LOG.run(G, ctx, {
           message: params.message || `Оппонент: ${player.name}`,
+          audience: 'private',
         });
         return null;
       }
@@ -296,6 +305,7 @@ export const EVENTS = {
 
       EVENTS.LOG.run(G, ctx, {
         message: params.message || 'Выберите оппонента',
+        audience: 'private',
       });
 
       return returnKey;
@@ -323,7 +333,7 @@ export const EVENTS = {
   PROMPT: {
     return: '$prompt',
     run: (G, ctx, params) => {
-      pushLog(G, applyTemplate(params.message, params.template));
+      pushLog(G, applyTemplate(params.message, params.template), { audience: 'private', ctx });
       if (params.return == null) return null;
       G.pendingActions = (params.answers || []).map(a => ({
         id: a.id,
@@ -404,7 +414,7 @@ export const EVENTS = {
         (params.message || 'Выберите цель: ${count}').replace(/\$\{count\}/g, String(selection)),
         { '${remaining}': candidates.length, ...(params.template ?? {}) },
       );
-      EVENTS.LOG.run(G, ctx, { message });
+      EVENTS.LOG.run(G, ctx, { message, audience: 'private' });
 
       return returnKey;
     },
@@ -563,6 +573,7 @@ export const EVENTS = {
             : fighter
               ? `Выберите клетку для ${fighter.name} (до ${maxSteps} клеток)`
               : 'Выберите клетку'),
+        audience: 'private',
       });
       return returnKey;
     },
