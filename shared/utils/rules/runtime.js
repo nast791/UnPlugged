@@ -37,8 +37,8 @@ export const resolveOutput = (G, returnKey) => {
   if (returnKey && sel?.returnKey === returnKey) {
     const val = G.vars?.[returnKey];
     const pending =
-      (sel.kind === 'card' || sel.kind === 'hand' || sel.kind === 'revealed' || sel.kind === 'opponent') &&
-      sel.selection === 1
+      sel.selection === 1 &&
+      ['card', 'hand', 'revealed', 'opponent', 'target', 'cell'].includes(sel.kind)
         ? isEmpty(val)
         : (Array.isArray(val) ? val.length : 0) < sel.selection;
     if (pending) {

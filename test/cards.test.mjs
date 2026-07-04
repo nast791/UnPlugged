@@ -606,6 +606,54 @@ assert(deathGaze.trigger === EFFECT_TRIGGERS.AFTER_COMBAT, 'effect trigger');
   assert(G.pipeline === null, 'fateful meeting pipeline done');
 }
 
+// medusa zone via attackType (pack field), not rangeType
+{
+  const ctx = makeCtx('EFFECT', '0');
+  const G = {
+    map: {
+      circles: [
+        { id: 1, zones: ['#F1E493'], neighbors: [2] },
+        { id: 2, zones: ['#F1E493'], neighbors: [1, 3] },
+        { id: 3, zones: ['#F1E493'], neighbors: [2] },
+      ],
+    },
+    players: [
+      {
+        id: '0',
+        fighters: [
+          {
+            id: 'medusa',
+            type: 'hero',
+            attackType: 'ranged',
+            hp: 10,
+            currentHp: 10,
+            position: '1',
+          },
+        ],
+      },
+      {
+        id: '1',
+        fighters: [
+          {
+            id: 'tesla',
+            type: 'hero',
+            attackType: 'ranged',
+            hp: 10,
+            currentHp: 10,
+            position: '3',
+          },
+        ],
+      },
+    ],
+  };
+  const candidates = runFact(
+    'FIGHTERS_IN_RANGE',
+    { sourceId: 'medusa', side: 'any', kind: 'fighter' },
+    { G, ctx },
+  );
+  assert(candidates.includes('medusa') && candidates.includes('tesla'), 'zone targets via attackType');
+}
+
 // --- medusa_04: after combat move each harpy ---
 {
   const G = makeCombatG({

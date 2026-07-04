@@ -24,10 +24,14 @@
     "test:game": "node test/game.test.mjs",
     "test:integration": "node test/game.integration.test.mjs",
     "test:phases": "node test/phases.test.mjs",
+    "test:effect": "node test/effect.test.mjs",
+    "test:card-play": "node test/cardPlay.test.mjs",
     "test:cards": "node test/cards.test.mjs",
     "test:tesla-cards": "node test/tesla-cards.test.mjs",
     "test:logging": "node test/logging.test.mjs",
-    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:logging && yarn test:cards && yarn test:tesla-cards && yarn test:game && yarn test:integration && yarn test:phases"
+    "test:card-zones": "node test/cardZones.test.mjs",
+    "test:player-labels": "node test/playerLabels.test.mjs",
+    "test": "yarn test:pipeline && yarn test:skills && yarn test:rules && yarn test:logging && yarn test:card-zones && yarn test:player-labels && yarn test:cards && yarn test:tesla-cards && yarn test:game && yarn test:integration && yarn test:phases && yarn test:effect && yarn test:card-play"
   },
   "dependencies": {
     "@fontsource-variable/onest": "5.2.11",

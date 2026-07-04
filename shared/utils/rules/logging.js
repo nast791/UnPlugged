@@ -54,13 +54,17 @@ export const mergeLogsForPlayer = (G, playerID) => {
   return [...pub, ...priv].sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
 };
 
+import { applyCardZonePlayerView } from './helpers.js';
+
 export const applyPlayerView = (G, ctx, playerID) => {
   if (playerID == null || !G) return G;
 
   const isActive = String(ctx.currentPlayer) === String(playerID);
+  const zonePatch = applyCardZonePlayerView(G, ctx, playerID);
 
   return {
     ...G,
+    ...zonePatch,
     privateLog: (G.privateLog ?? []).filter(e => String(e.playerId) === String(playerID)),
     pendingActions: isActive ? (G.pendingActions ?? []) : [],
     targetSelection: isActive ? G.targetSelection : null,

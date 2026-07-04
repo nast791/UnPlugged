@@ -1453,7 +1453,7 @@ const makeTesla10G = (overrides = {}) =>
   const playCtx = { G, ctx, events: mockEvents() };
   const hook = evaluateTrigger(EFFECT_TRIGGERS.INSTANT, waveImpact, G, ctx);
 
-  assert(hook?.actions?.length === 9, 'wave impact triggers');
+  assert(hook?.actions?.length === 11, 'wave impact triggers');
   startPipeline(G, ctx, playCtx.events, hook.actions, 'tesla_10');
   submitPipelineInput(playCtx, { vars: [{ var: '$moveAnswer', value: 'skip' }] });
   assert(G.players[0].actionsPoints === 3, 'skip: +1 action');
@@ -1483,11 +1483,47 @@ const makeTesla10G = (overrides = {}) =>
   startPipeline(G, ctx, playCtx.events, hook.actions, 'tesla_10');
   submitPipelineInput(playCtx, { vars: [{ var: '$moveAnswer', value: 'move' }] });
   assert(G.vars.$opponentId === '1', 'single opponent auto-selected');
+  submitPipelineInput(playCtx, { vars: [{ var: '$answer', value: 'move' }] });
   assert(pickPipelineTarget(playCtx, 'enemy1'), 'pick opponent fighter');
   assert(pickPipelineCell(playCtx, '4'), 'move enemy1 to cell 4');
   assert(String(G.players[1].fighters[0].position) === '4', 'enemy1 moved');
   assert(G.players[0].actionsPoints === 3, 'after moves: +1 action');
   assert(G.pipeline === null, 'wave impact move done');
+}
+
+// --- tesla_10: per-fighter skip ends move phase, still grants action ---
+{
+  const G = makeTesla10G();
+  const playCtx = { G, ctx, events: mockEvents() };
+  const hook = evaluateTrigger(EFFECT_TRIGGERS.INSTANT, waveImpact, G, ctx);
+
+  startPipeline(G, ctx, playCtx.events, hook.actions, 'tesla_10');
+  submitPipelineInput(playCtx, { vars: [{ var: '$moveAnswer', value: 'move' }] });
+  submitPipelineInput(playCtx, { vars: [{ var: '$answer', value: 'skip' }] });
+  assert(String(G.players[1].fighters[0].position) === '2', 'enemy1 not moved after skip');
+  assert(String(G.players[1].fighters[1].position) === '4', 'minion1 not moved after skip');
+  assert(G.players[0].actionsPoints === 3, 'skip fighters: +1 action');
+  assert(G.pipeline === null, 'wave impact per-fighter skip done');
+}
+
+// --- tesla_10: move two fighters, second stays in place (0 cells) ---
+{
+  const G = makeTesla10G();
+  const playCtx = { G, ctx, events: mockEvents() };
+  const hook = evaluateTrigger(EFFECT_TRIGGERS.INSTANT, waveImpact, G, ctx);
+
+  startPipeline(G, ctx, playCtx.events, hook.actions, 'tesla_10');
+  submitPipelineInput(playCtx, { vars: [{ var: '$moveAnswer', value: 'move' }] });
+  submitPipelineInput(playCtx, { vars: [{ var: '$answer', value: 'move' }] });
+  assert(pickPipelineTarget(playCtx, 'enemy1'), 'pick enemy1');
+  assert(pickPipelineCell(playCtx, '2'), 'enemy1 stays on cell 2');
+  submitPipelineInput(playCtx, { vars: [{ var: '$answer', value: 'move' }] });
+  assert(pickPipelineTarget(playCtx, 'minion1'), 'pick minion1');
+  assert(pickPipelineCell(playCtx, '4'), 'minion1 stays on cell 4');
+  assert(String(G.players[1].fighters[0].position) === '2', 'enemy1 unchanged');
+  assert(String(G.players[1].fighters[1].position) === '4', 'minion1 unchanged');
+  assert(G.players[0].actionsPoints === 3, 'two fighters processed: +1 action');
+  assert(G.pipeline === null, 'wave impact two fighters done');
 }
 
 assert(tesla11, 'tesla_11 loaded');

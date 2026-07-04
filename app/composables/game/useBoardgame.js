@@ -1,6 +1,7 @@
 import { game } from '#shared/utils/game';
 import { Client } from 'boardgame.io/client';
 import { useGameStore } from '~/store/game.js';
+import { syncDamageFxFromState } from '~/composables/game/useFighterDamageSlash';
 
 const sharedClient = shallowRef(null);
 const sharedG = ref(null);
@@ -63,6 +64,7 @@ export const useBoardgame = () => {
       if (!state) return;
       sharedG.value = state.G;
       sharedCtx.value = state.ctx;
+      syncDamageFxFromState(state.G);
       scheduleCardAutoPick(state.G);
     });
 

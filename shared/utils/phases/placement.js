@@ -33,10 +33,10 @@ export const placementPhase = {
       G.highlightCells = runFact('PLACEMENT_CELLS', { fighterId }, { G, ctx });
     },
     placeUnit: (playCtx, { unitId, circleId }) => {
-      if (!runMove('PLACE_FIGHTER', playCtx, { unitId, circleId })) return INVALID_MOVE;
+      if (runMove('PLACE_FIGHTER', playCtx, { unitId, circleId }) === false) return INVALID_MOVE;
     },
     finishUnitPlacement: playCtx => {
-      runMove('FINISH_PLACEMENT', playCtx);
+      if (runMove('FINISH_PLACEMENT', playCtx) === false) return INVALID_MOVE;
     },
   },
 };

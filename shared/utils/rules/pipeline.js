@@ -1,7 +1,15 @@
 import { runMove } from './moves.js';
 import { runEvent } from './events.js';
 import { FACTS } from './facts.js';
-import { isOpponentCardEffectSuppressed } from './helpers.js';
+import {
+  isOpponentCardEffectSuppressed,
+  getActivePlayer,
+  filterHandCards,
+  getCardPlayableFighters,
+  getHandCardId,
+  cardMatchesPhase,
+} from './helpers.js';
+import { EFFECT_TRIGGERS } from '../../constants/triggers.js';
 import { GAME_PHASES } from '../../constants/phases.js';
 import { isEmpty } from '../../constants/operators.js';
 import {
@@ -123,11 +131,17 @@ const getStepTier = step => {
 
 export const getStepKey = (step, index) => step.id ?? index;
 
+const normalizeDone = done => {
+  if (!done) return [];
+  if (Array.isArray(done)) return done;
+  return [...done];
+};
+
 export const listEligibleSteps = (actions, done, G, ctx, requireStart) =>
   actions
     .map((step, index) => ({ step, index, key: getStepKey(step, index) }))
     .filter(({ step, key }) => {
-      if (done.has(key)) return false;
+      if (normalizeDone(done).includes(key)) return false;
       if (requireStart && !step.start) return false;
       return evaluateConditions(step.conditions, G, ctx);
     });
@@ -166,7 +180,8 @@ export const shouldRequireStartStep = (actions, pipeline) => {
 export const advancePipeline = playCtx => {
   const { G } = playCtx;
   if (!G.pipeline) return;
-  if (!G.pipeline.done) G.pipeline.done = new Set();
+  if (!G.pipeline.done) G.pipeline.done = [];
+  else if (!Array.isArray(G.pipeline.done)) G.pipeline.done = [...G.pipeline.done];
   if (G.pipeline.started == null) G.pipeline.started = false;
   const { actions, done } = G.pipeline;
   let loop = true;
@@ -188,7 +203,7 @@ export const advancePipeline = playCtx => {
     G.pipeline.started = true;
     if (result.status === 'pending') return;
 
-    done.add(stepKey);
+    done.push(stepKey);
     if (step.end) {
       finishPipeline(playCtx);
       return;
@@ -280,6 +295,7 @@ export const pickPipelineCard = (playCtx, cardId) => {
     G.targetSelection = null;
     G.outputVar = null;
     continueFlow(playCtx);
+    runMove('REFRESH_CARD_UI', playCtx);
   }
   return true;
 };
@@ -301,15 +317,77 @@ export const pickPipelineOpponentPlayer = (playCtx, playerId) => {
 };
 
 export const submitPipelineInput = (playCtx, payload) => {
-  if (!runMove('SET_VARIABLES', playCtx, payload)) return false;
+  if (runMove('SET_VARIABLES', playCtx, payload) === false) return false;
   continueFlow(playCtx);
-  return true;
 };
 
 export const startPipeline = (G, ctx, events, actions, id) => {
   if (!G.vars) G.vars = {};
-  G.pipeline = { actions, id, events, started: false };
+  G.pipeline = { actions, id, started: false };
+  G.selectedUnitId = null;
+  if (G.targetSelection?.kind === 'own') {
+    G.targetSelection = null;
+    G.highlightCells = [];
+  }
   advancePipeline({ G, ctx, events });
+};
+
+/** Проверка conditions триггера без сброса pipeline / pendingActions. */
+export const checkTriggerConditions = (hook, G, ctx, combatContext = {}) => {
+  if (!hook) return false;
+  if (!hook.conditions) return true;
+  return evaluateConditions(hook.conditions, G, ctx, combatContext);
+};
+
+/** Можно ли сыграть карту эффекта с учётом бойца на поле и conditions instant-триггера. */
+export const canPlayEffectCard = (card, G, ctx) => {
+  const player = getActivePlayer(G, ctx);
+  if (!player || !card || card.type !== 'effect') return false;
+  if (!cardMatchesPhase(card, 'EFFECT')) return false;
+  if (isOpponentCardEffectSuppressed(G, ctx, player.id)) return false;
+
+  const playableFighters = getCardPlayableFighters(card, G, ctx);
+  if (!playableFighters.length) return false;
+
+  const hook = (card.triggers ?? []).find(t => t.trigger === EFFECT_TRIGGERS.INSTANT);
+  if (!hook) return false;
+
+  const declared = card.role ?? card.fighter;
+  const fighterId =
+    declared && declared !== 'any'
+      ? String(declared)
+      : String(playableFighters[0].id);
+
+  const savedCombat = G.combat;
+  const savedVars = G.vars;
+  G.combat = {
+    attackerPlayerId: String(player.id),
+    attackerId: fighterId,
+    cardId: getHandCardId(card),
+    card: {
+      id: card.id,
+      type: card.type,
+      fighter: card.fighter ?? card.role,
+      bonus: card.bonus,
+      phase: card.phase,
+      value: card.value,
+    },
+  };
+  G.vars = { ...(savedVars ?? {}) };
+
+  const ok = checkTriggerConditions(hook, G, ctx, { trigger: EFFECT_TRIGGERS.INSTANT });
+
+  G.combat = savedCombat;
+  G.vars = savedVars;
+  return ok;
+};
+
+export const getPlayableEffectCardIds = (G, ctx) => {
+  const player = getActivePlayer(G, ctx);
+  if (!player?.hand?.length) return [];
+  return filterHandCards(player, { types: ['effect'], phase: 'EFFECT' }, { G, ctx })
+    .filter(card => canPlayEffectCard(card, G, ctx))
+    .map(getHandCardId);
 };
 
 export function evaluateTrigger(triggerName, hook, G, ctx, combatContext = {}) {

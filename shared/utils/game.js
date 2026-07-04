@@ -18,8 +18,8 @@ const asMove = (name, mapPayload) => (playCtx, payload) => {
 };
 
 const sharedMoves = {
-  clearHighlights: playCtx => runMove('CLEAR_HIGHLIGHTS', playCtx),
-  clearOwnSelection: playCtx => runMove('CLEAR_OWN_SELECTION', playCtx),
+  clearHighlights: asMove('CLEAR_HIGHLIGHTS'),
+  clearOwnSelection: asMove('CLEAR_OWN_SELECTION'),
   selectTarget: asMove('SELECT_TARGET'),
   selectCard: asMove('SELECT_CARD'),
   selectHandCard: asMove('SELECT_CARD'),
@@ -27,6 +27,8 @@ const sharedMoves = {
   selectOpponentPlayer: asMove('SELECT_OPPONENT_PLAYER'),
   selectCell: asMove('SELECT_CELL'),
   setVariables: asMove('SUBMIT_PIPELINE_INPUT'),
+  confirmZoneView: asMove('DISMISS_ZONE_VIEW'),
+  cancelAction: asMove('CANCEL_ACTION'),
 };
 
 const createPhase = config => ({
@@ -60,10 +62,15 @@ export const game = {
       winner: false,
       highlightCells: [],
       highlightFighters: [],
+      recentDamage: [],
       targetSelection: null,
       vars: {},
       outputVar: null,
       pipeline: null,
+      zoneVisibilityGrants: [],
+      cardZoneUI: {},
+      cardZoneCounts: {},
+      handCardUI: { selectableIds: null, disabledIds: [] },
     };
   },
   endIf: ({ G, ctx }) => {

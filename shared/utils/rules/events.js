@@ -1,5 +1,6 @@
 import {
   findFighter,
+  getFighterOwner,
   getActivePlayer,
   getAliveHeroPlayers,
   getFighterPositions,
@@ -24,6 +25,11 @@ import {
   getRevealedDeckEntries,
   resolvePlayerTarget,
   peekDeckCards,
+  refreshCardZoneUI,
+  refreshHandCardUI,
+  mergePendingActions,
+  getPendingZoneConfirmActions,
+  assignTeamId,
 } from './helpers.js';
 import {
   resolveVariables,
@@ -36,6 +42,54 @@ import {
   removeGamePath,
 } from './runtime.js';
 import { runFact } from './facts.js';
+import { nextLogSeq } from './logging.js';
+
+export const grantZoneVisibility = (G, ctx, params) => {
+  if (!G.zoneVisibilityGrants) G.zoneVisibilityGrants = [];
+
+  const grant = {
+    id: params.grantId ?? `zone_${G.logSeq ?? 0}_${G.zoneVisibilityGrants.length}`,
+    ownerId: String(params.ownerId),
+    zone: params.zone,
+    viewerId: String(params.viewerId ?? ctx.currentPlayer),
+    requireConfirm: !!params.requireConfirm,
+  };
+
+  G.zoneVisibilityGrants = G.zoneVisibilityGrants.filter(
+    g =>
+      !(
+        String(g.ownerId) === grant.ownerId &&
+        g.zone === grant.zone &&
+        String(g.viewerId) === grant.viewerId
+      ),
+  );
+  G.zoneVisibilityGrants.push(grant);
+  refreshCardZoneUI(G, ctx);
+  return grant;
+};
+
+export const revokeZoneVisibility = (G, ctx, params) => {
+  if (!G.zoneVisibilityGrants?.length) return 0;
+
+  const before = G.zoneVisibilityGrants.length;
+  G.zoneVisibilityGrants = G.zoneVisibilityGrants.filter(g => {
+    if (params.grantId && g.id !== params.grantId) return true;
+    if (params.ownerId != null && String(g.ownerId) !== String(params.ownerId)) return true;
+    if (params.zone && g.zone !== params.zone) return true;
+    if (params.viewerId != null && String(g.viewerId) !== String(params.viewerId)) return true;
+    if (params.requireConfirm != null && g.requireConfirm !== params.requireConfirm) return true;
+    return false;
+  });
+
+  refreshCardZoneUI(G, ctx);
+  return before - G.zoneVisibilityGrants.length;
+};
+
+export const applyZoneConfirmPending = G => {
+  const confirms = getPendingZoneConfirmActions(G);
+  if (!confirms.length) return;
+  mergePendingActions(G, confirms, G.pendingActions ?? []);
+};
 
 export const EVENTS = {
   LOG: {
@@ -267,6 +321,20 @@ export const EVENTS = {
         audience: 'private',
       });
 
+      const cardOwnerId = params.playerId != null ? String(params.playerId) : String(owner.id);
+      const revealHand =
+        params.revealZone === 'hand' ||
+        (cardOwnerId !== String(ctx.currentPlayer) && source === 'hand');
+      if (revealHand) {
+        grantZoneVisibility(G, ctx, {
+          ownerId: cardOwnerId,
+          zone: 'hand',
+          requireConfirm: params.requireConfirm !== false,
+        });
+        applyZoneConfirmPending(G);
+      }
+
+      refreshHandCardUI(G, ctx);
       return returnKey;
     },
   },
@@ -406,7 +474,7 @@ export const EVENTS = {
       };
       storeReturn(G, returnKey, selection === 1 ? '' : []);
 
-      if (candidates.length > 1) {
+      if (candidates.length) {
         EVENTS.HIGHLIGHT_TARGETS.run(G, ctx, { targets: candidates });
       }
 
@@ -619,7 +687,8 @@ export const EVENTS = {
   RELOOP_PIPELINE: {
     run: (G, ctx, params) => {
       if (!G.pipeline?.done) return null;
-      (params.steps || []).forEach(id => G.pipeline.done.delete(id));
+      const remove = new Set((params.steps || []).map(String));
+      G.pipeline.done = G.pipeline.done.filter(id => !remove.has(String(id)));
       (params.clearVars || []).forEach(key => delete G.vars[key]);
       EVENTS.HIGHLIGHT_TARGETS.run(G, ctx);
       return null;
@@ -746,8 +815,20 @@ export const EVENTS = {
         const fighter = findFighter(G, targetId);
         if (!fighter || (fighter.currentHp ?? 0) <= 0) return;
 
-        const nextHp = Math.max(0, (fighter.currentHp ?? 0) - amount);
+        const fromHp = fighter.currentHp ?? 0;
+        const nextHp = Math.max(0, fromHp - amount);
         fighter.currentHp = nextHp;
+
+        if (!G.recentDamage) G.recentDamage = [];
+        G.recentDamage.push({
+          id: nextLogSeq(G),
+          fighterId: String(fighter.id),
+          amount,
+          fromHp,
+          toHp: nextHp,
+        });
+        if (G.recentDamage.length > 12) G.recentDamage = G.recentDamage.slice(-12);
+
         EVENTS.LOG.run(G, ctx, {
           message: `${fighter.name} получает ${amount} урона! (HP: ${nextHp})`,
           type: 'danger',
@@ -895,6 +976,42 @@ export const EVENTS = {
             ? 'Ничья! Все герои пали.'
             : `Игра окончена! Победитель: ${alive[0].name}`,
       });
+      return null;
+    },
+  },
+  SET_CARD_ZONE_VISIBILITY: {
+    run: (G, ctx, params) => {
+      const ownerId = params.ownerId ?? params.playerId;
+      if (ownerId == null || !params.zone) return null;
+
+      if (params.visible === false) {
+        revokeZoneVisibility(G, ctx, {
+          ownerId,
+          zone: params.zone,
+          viewerId: params.viewerId,
+          grantId: params.grantId,
+        });
+        return null;
+      }
+
+      grantZoneVisibility(G, ctx, {
+        ownerId,
+        zone: params.zone,
+        viewerId: params.viewerId,
+        requireConfirm: !!params.requireConfirm,
+        grantId: params.grantId,
+      });
+
+      if (params.requireConfirm) applyZoneConfirmPending(G);
+      return null;
+    },
+  },
+  ASSIGN_TEAMS: {
+    run: (G, _ctx, params = {}) => {
+      const playerCount = params.playerCount ?? G.players?.length ?? 0;
+      for (let i = 0; i < (G.players?.length ?? 0); i++) {
+        G.players[i].teamId = assignTeamId(i, playerCount);
+      }
       return null;
     },
   },

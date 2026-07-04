@@ -1,5 +1,6 @@
 import { useGameStore } from '~/store/game.js';
 import { PLAYER_TYPES } from '#shared/constants/playerTypes';
+import { runEvent } from '#shared/utils/rules/events.js';
 import useUtils from '~/composables/useUtils';
 import { getMap, getHeroes } from '~/composables/api/plugins';
 
@@ -15,6 +16,8 @@ export const useGameInit = () => {
     await Promise.all([mapQuery.suspense(), heroesQuery.suspense()]);
 
     const newGameId = crypto.randomUUID();
+
+    const playerCount = heroesQuery?.data.value?.length ?? 0;
 
     const players = heroesQuery?.data.value?.map((player, index) => {
       const fullDeck = player.cards.flatMap(card =>
@@ -45,6 +48,7 @@ export const useGameInit = () => {
         ) || []),
       ].map(f => ({
         ...f,
+        rangeType: f.rangeType ?? f.attackType ?? 'melee',
         active: false,
         bonusMovement: 0,
         canPassThroughEnemies: false,
@@ -76,7 +80,7 @@ export const useGameInit = () => {
         discard: [],
         visibility: {
           deck: false,
-          hand: isHuman,
+          hand: false,
           discard: false,
         },
         actionsPoints: 0,
@@ -84,6 +88,11 @@ export const useGameInit = () => {
         minHandSize: 0,
         maxHandSize: 7,
       };
+    });
+
+    runEvent({ players }, { currentPlayer: '0' }, 'ASSIGN_TEAMS', {
+      params: { playerCount },
+      raw: true,
     });
 
     const radius = mapQuery?.data.value?.settings?.nodeSize / 2;

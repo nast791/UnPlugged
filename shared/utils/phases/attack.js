@@ -6,7 +6,14 @@ export const attack = {
   onBegin: ({ G }) => {
     ensureCombatDefaults(G);
   },
-  onEnd: ({ G, ctx, events }) => {
+  next: ({ G, ctx }) => {
+    const player = getActivePlayer(G, ctx);
+    if (player.actionsUsed >= player.actionsPoints) {
+      return 'TURN_END';
+    }
+    return 'ACTION_SELECTION';
+  },
+  onEnd: ({ G, ctx }) => {
     if (G.combat) {
       resolveCombatPowers(G);
     }
@@ -16,9 +23,6 @@ export const attack = {
 
     if (player.actionsUsed >= player.actionsPoints) {
       runMove('LOG', { G, ctx }, { message: `Действия игрока ${player.name} исчерпаны.` });
-      events.setPhase('TURN_END');
-    } else {
-      events.setPhase('ACTION_SELECTION');
     }
   },
 };

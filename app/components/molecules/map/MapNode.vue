@@ -9,6 +9,7 @@
 <script setup>
 import { useBoardgame } from '~/composables/game/useBoardgame';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
+import { useCardPlayPhase } from '~/composables/game/useCardPlayPhase';
 import { CELL_HIGHLIGHTS } from '#shared/constants/highlights';
 import { getOwnPickedId } from '#shared/utils/rules/helpers';
 
@@ -26,6 +27,7 @@ const emit = defineEmits(['select']);
 const isHovered = ref(false);
 const { client, activePlayer, G, ctx } = useBoardgame();
 const { dragItem } = useGlobalDrag();
+const { isSelectingCell, isCellSelectable } = useCardPlayPhase();
 
 watch(dragItem, newItem => {
   if (newItem) {
@@ -69,7 +71,6 @@ const isHighlighted = computed(() => {
   const id = String(props.node.id);
   if (dragItem.value) {
     const type = dragItem.value.type;
-
     if (G.value.highlightCells[type] && Array.isArray(G.value.highlightCells[type])) {
       return G.value.highlightCells[type].map(String).includes(id);
     }
@@ -88,6 +89,7 @@ const currentPhase = computed(() => ctx.value?.phase);
 const currentHighlight = computed(() => {
   if (currentPhase.value === 'UNIT_PLACEMENT') return highlightings?.[0];
   if (currentPhase.value === 'MOVEMENT') return highlightings?.[1];
+  if (G.value?.pipeline) return highlightings?.[1];
   return highlightings?.[0];
 });
 
@@ -105,6 +107,14 @@ const highlightConfig = computed(() => ({
 
 const handlePointerClick = e => {
   if (e.cancelBubble !== undefined) e.cancelBubble = true;
+  const cellId = String(props.node.id);
+
+  if (isSelectingCell.value && isCellSelectable(cellId)) {
+    client.value?.moves?.selectCell?.({ cellId });
+    emit('select', e, props.node.id);
+    return;
+  }
+
   const pickedId = getOwnPickedId(G.value);
   if (!pickedId) return;
   const phase = currentPhase.value;

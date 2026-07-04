@@ -1,4 +1,8 @@
 import { CARD_PLAY_PHASES } from '../../constants/cardTypes.js';
+import { GAME_PHASES } from '../../constants/phases.js';
+import { isEmpty } from '../../constants/operators.js';
+import { CARD_ZONES, emptyCardZoneVisibility } from '../../constants/decks.js';
+import { PLAYER_TYPES, PLAYER_SIDEBAR_ROLES, TEAM_PAIR_SIZE } from '../../constants/playerTypes.js';
 export const getHandCardId = card => String(card.instanceId ?? card.id);
 
 export const fighterMatchesRef = (fighter, ref) => {
@@ -132,6 +136,50 @@ export const getOpponentPlayers = (G, ctx, params = {}) => {
     );
   }
   return opponents;
+};
+
+/** Распределение по командам: в дуэли у каждого своя команда, в 2v2 — пары 0–1 и 2–3. */
+export const assignTeamId = (playerIndex, playerCount) => {
+  if (playerCount <= TEAM_PAIR_SIZE) return playerIndex;
+  return Math.floor(playerIndex / TEAM_PAIR_SIZE);
+};
+
+export const areSameTeam = (playerA, playerB) => {
+  if (!playerA || !playerB) return false;
+  if (playerA.teamId == null || playerB.teamId == null) return false;
+  return String(playerA.teamId) === String(playerB.teamId);
+};
+
+export const getTeammates = (G, playerId, { excludeSelf = true } = {}) => {
+  const player = G.players?.find(p => String(p.id) === String(playerId));
+  if (!player) return [];
+  return (G.players ?? []).filter(p => {
+    if (excludeSelf && String(p.id) === String(playerId)) return false;
+    return areSameTeam(player, p);
+  });
+};
+
+export const getPlayerSidebarRole = (player, viewerId, players = []) => {
+  if (!player) return '';
+
+  if (String(player.id) === String(viewerId)) {
+    return PLAYER_SIDEBAR_ROLES.SELF;
+  }
+
+  if (player.type === PLAYER_TYPES.AI.id) {
+    return PLAYER_SIDEBAR_ROLES.AI;
+  }
+
+  const viewer = players.find(p => String(p.id) === String(viewerId));
+  if (areSameTeam(viewer, player)) {
+    return PLAYER_SIDEBAR_ROLES.TEAMMATE;
+  }
+
+  if (player.type === PLAYER_TYPES.HUMAN.id) {
+    return PLAYER_SIDEBAR_ROLES.HUMAN;
+  }
+
+  return '';
 };
 
 /** Текстовые эффекты карты подавлены для указанных игроков. */
@@ -419,6 +467,11 @@ export const applyTemplate = (message, template = {}) => {
 export const getAliveHeroPlayers = G =>
   G.players.filter(p => p.fighters.some(f => f.type === 'hero' && (f.currentHp ?? 0) > 0));
 
+export const getFighterRangeType = fighter =>
+  fighter?.rangeType ?? fighter?.attackType ?? 'melee';
+
+export const isRangedFighter = fighter => getFighterRangeType(fighter) === 'ranged';
+
 export const getFighterPositions = fighter => {
   if (fighter?.position == null) return [];
   return (Array.isArray(fighter.position) ? fighter.position : [fighter.position])
@@ -676,4 +729,223 @@ export const filterFightersInRange = (G, ownerPlayer, reachable, params) => {
       })
       .map(f => f.id);
   });
+};
+
+const zoneCount = (player, zone) => {
+  const list = player?.[zone];
+  return Array.isArray(list) ? list.length : 0;
+};
+
+/** Количество карт в зонах с учётом секретности (без раскрытия содержимого). */
+export const computeCardZoneCounts = (G, ctx, viewerId = ctx?.currentPlayer) => {
+  const viewer = String(viewerId ?? '');
+  const counts = {};
+
+  for (const player of G.players ?? []) {
+    const ownerId = String(player.id);
+    const isSelf = ownerId === viewer;
+    const zones = emptyCardZoneVisibility();
+
+    for (const zone of CARD_ZONES) {
+      zones[zone] = zoneCount(player, zone);
+    }
+
+    if (!isSelf) {
+      zones.hand = 0;
+      for (const grant of G.zoneVisibilityGrants ?? []) {
+        if (String(grant.viewerId) !== viewer) continue;
+        if (String(grant.ownerId) !== ownerId) continue;
+        if (grant.zone === 'hand') {
+          zones.hand = zoneCount(player, 'hand');
+        }
+      }
+    }
+
+    counts[ownerId] = zones;
+  }
+
+  return counts;
+};
+
+/** Условия отмены действия: пока предикат true, можно вернуться к выбору действия. */
+export const ACTION_CANCEL_RULES = {
+  [GAME_PHASES.EFFECT]: G =>
+    !G.pipeline &&
+    !G.combat?.cardId &&
+    !G.selectedCardId &&
+    (G.targetSelection?.kind === 'card' || isEmpty(G.vars?.$effectCardId)),
+
+  [GAME_PHASES.MOVEMENT]: (G, ctx) => {
+    const player = getActivePlayer(G, ctx);
+    const hasMoved = player.fighters.some(f => f.position !== f.startPosition);
+    return !hasMoved && !G.bonusCards?.length;
+  },
+
+  [GAME_PHASES.ATTACK]: G => !G.pipeline && !G.combat?.cardId && !G.selectedCardId,
+
+  [GAME_PHASES.DEFENSE]: G => !G.pipeline && !G.combat?.cardId && !G.selectedCardId,
+};
+
+export const canCancelAction = (G, ctx) => {
+  const rule = ACTION_CANCEL_RULES[ctx?.phase];
+  return rule ? rule(G, ctx) : false;
+};
+
+export const resetActionSelectionState = (G, ctx) => {
+  const phase = ctx?.phase;
+
+  G.targetSelection = null;
+  G.outputVar = null;
+  G.selectedAction = null;
+  G.pipeline = null;
+  G.combat = null;
+  G.selectedCardId = null;
+  G.selectedUnitId = null;
+  G.highlightCells = [];
+  G.highlightFighters = [];
+
+  if (phase === GAME_PHASES.MOVEMENT) {
+    G.bonus = 0;
+    G.bonusCards = [];
+    const player = getActivePlayer(G, ctx);
+    player?.fighters?.forEach(f => {
+      f.position = f.startPosition;
+    });
+  }
+
+  if (phase === GAME_PHASES.EFFECT && G.vars) {
+    G.vars.$effectCardId = '';
+  }
+};
+
+/** Базовая видимость зон карт для текущего игрока. */
+export const computeCardZoneView = (G, ctx, viewerId = ctx?.currentPlayer) => {
+  const viewer = String(viewerId ?? '');
+  const view = {};
+
+  for (const player of G.players ?? []) {
+    const ownerId = String(player.id);
+    const isSelf = ownerId === viewer;
+    const zones = emptyCardZoneVisibility();
+
+    if (isSelf) {
+      zones.hand = zoneCount(player, 'hand') > 0;
+      zones.discard = zoneCount(player, 'discard') > 0;
+    } else {
+      zones.discard = zoneCount(player, 'discard') > 0;
+    }
+
+    for (const grant of G.zoneVisibilityGrants ?? []) {
+      if (String(grant.viewerId) !== viewer) continue;
+      if (String(grant.ownerId) !== ownerId) continue;
+      if (CARD_ZONES.includes(grant.zone)) {
+        zones[grant.zone] = zoneCount(player, grant.zone) > 0 || grant.zone === 'hand';
+      }
+    }
+
+    view[ownerId] = zones;
+  }
+
+  return view;
+};
+
+export const refreshCardZoneUI = (G, ctx) => {
+  G.cardZoneUI = computeCardZoneView(G, ctx);
+  G.cardZoneCounts = computeCardZoneCounts(G, ctx);
+};
+
+export const computeHandCardUI = (G, ctx) => {
+  const player = getActivePlayer(G, ctx);
+  const hand = player?.hand ?? [];
+  const allIds = hand.map(getHandCardId);
+
+  if (ctx.phase === GAME_PHASES.MOVEMENT && G.bonusCards?.length) {
+    return { selectableIds: [], disabledIds: allIds };
+  }
+
+  const sel = G.targetSelection;
+  if (sel?.kind === 'card' && sel.candidates?.length) {
+    const ownerId = sel.playerId != null ? String(sel.playerId) : String(player?.id);
+    if (ownerId === String(ctx.currentPlayer)) {
+      const selectable = sel.candidates.map(String);
+      return {
+        selectableIds: selectable,
+        disabledIds: allIds.filter(id => !selectable.includes(String(id))),
+      };
+    }
+  }
+
+  if (ctx.phase === GAME_PHASES.MOVEMENT && !G.bonusCards?.length) {
+    const bonusIds = hand.filter(c => Number(c.bonus) > 0).map(getHandCardId);
+    if (bonusIds.length) {
+      return {
+        selectableIds: bonusIds,
+        disabledIds: allIds.filter(id => !bonusIds.includes(String(id))),
+      };
+    }
+  }
+
+  return { selectableIds: null, disabledIds: [] };
+};
+
+export const refreshHandCardUI = (G, ctx) => {
+  G.handCardUI = computeHandCardUI(G, ctx);
+};
+
+export const refreshCardUI = (G, ctx, { zones = true, hand = true } = {}) => {
+  if (zones) refreshCardZoneUI(G, ctx);
+  if (hand) refreshHandCardUI(G, ctx);
+};
+
+export const getPendingZoneConfirmActions = G => {
+  const pending = [];
+  for (const grant of G.zoneVisibilityGrants ?? []) {
+    if (!grant.requireConfirm) continue;
+    pending.push({
+      id: `confirm-zone-${grant.id}`,
+      text: 'Просмотрено',
+      action: 'confirmZoneView',
+      payload: { grantId: grant.id },
+    });
+  }
+  return pending;
+};
+
+export const mergePendingActions = (G, ...groups) => {
+  const seen = new Set();
+  const merged = [];
+  for (const group of groups.flat()) {
+    if (!group?.id || seen.has(group.id)) continue;
+    seen.add(group.id);
+    merged.push(group);
+  }
+  G.pendingActions = merged;
+};
+
+export const applyCardZonePlayerView = (G, ctx, playerID) => {
+  const zoneView = computeCardZoneView(G, ctx, playerID);
+  const zoneCounts = computeCardZoneCounts(G, ctx, playerID);
+  const isActive = String(ctx.currentPlayer) === String(playerID);
+
+  const players = (G.players ?? []).map(p => {
+    const vis = zoneView[String(p.id)] ?? emptyCardZoneVisibility();
+    const counts = zoneCounts[String(p.id)] ?? emptyCardZoneVisibility();
+    return {
+      ...p,
+      visibility: vis,
+      zoneCounts: counts,
+      hand: vis.hand ? (p.hand ?? []) : [],
+      deck: vis.deck ? (p.deck ?? []) : [],
+      discard: vis.discard ? (p.discard ?? []) : [],
+    };
+  });
+
+  return {
+    zoneView,
+    players,
+    cardZoneUI: zoneView,
+    cardZoneCounts: zoneCounts,
+    handCardUI: isActive ? G.handCardUI : null,
+    zoneVisibilityGrants: isActive ? (G.zoneVisibilityGrants ?? []) : [],
+  };
 };

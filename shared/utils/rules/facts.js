@@ -23,6 +23,10 @@ import {
   getMovementCells,
   filterOwnFighters,
   filterFightersInRange,
+  isRangedFighter,
+  areSameTeam,
+  getTeammates,
+  getPlayerSidebarRole,
 } from './helpers.js';
 import { resolveVarValue } from './runtime.js';
 
@@ -54,7 +58,7 @@ export const FACTS = {
       if (!positions.length) return [];
 
       let reachableCircles;
-      if (fighter.rangeType === 'ranged') {
+      if (isRangedFighter(fighter)) {
         reachableCircles = getSourceZoneCells(G, fighter.id);
       } else {
         const maxSteps = Number(params.maxSteps ?? fighter.attackRange) || 1;
@@ -344,6 +348,21 @@ export const FACTS = {
       if (card.phase && trigger) return card.phase === trigger;
       if (!ctx.phase) return false;
       return cardMatchesPhase(card, ctx.phase);
+    },
+  },
+  IS_TEAMMATE: {
+    run: (params, { G, ctx }) => {
+      const viewer = resolvePlayer(G, ctx, params.viewerId != null ? { playerId: params.viewerId } : {});
+      const target = resolvePlayer(G, ctx, params.playerId != null ? params : params.targetId != null ? { playerId: params.targetId } : {});
+      return areSameTeam(viewer, target);
+    },
+  },
+  PLAYER_SIDEBAR_ROLE: {
+    return: '$playerRole',
+    run: (params, { G, ctx }) => {
+      const player = resolvePlayer(G, ctx, params);
+      const viewerId = params.viewerId ?? ctx.currentPlayer;
+      return getPlayerSidebarRole(player, viewerId, G.players ?? []);
     },
   },
 };
