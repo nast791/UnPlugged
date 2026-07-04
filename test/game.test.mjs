@@ -53,7 +53,7 @@ import {
   const ctx = makeCtx(GAME_PHASES.UNIT_PLACEMENT, '1');
   const events = mockEvents();
 
-  assert(runMove('AUTO_PLACE_AI', playCtx(G, ctx, events)), 'AUTO_PLACE_AI');
+  assert(runMove('AUTO_PLACE_AI', playCtx(G, ctx, events)) !== false, 'AUTO_PLACE_AI');
   assert(G.players[1].fighters.every(f => f.position != null), 'AI fighters placed');
   assert(events.endTurnCalled, 'AUTO_PLACE_AI endTurn');
 }

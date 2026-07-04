@@ -184,24 +184,24 @@ export const teslaSkill = ${JSON.stringify(teslaSkill, null, 2)};
   fs.writeFileSync(path.join(root, 'test/skillFixtures.mjs'), out);
 }
 
-function processFile(relPath) {
-  const filePath = path.join(root, relPath);
+function processFile(filePath) {
   const cards = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const missing = annotateCards(cards);
   fs.writeFileSync(filePath, `${JSON.stringify(cards, null, 2)}\n`);
-  return { relPath, missing, count: cards.flatMap(c => c.triggers?.flatMap(t => t.actions) ?? []).length };
+  return { filePath, missing, count: cards.flatMap(c => c.triggers?.flatMap(t => t.actions) ?? []).length };
 }
 
+const packRoot = path.join(root, '../Unmatched-pack');
 const files = [
-  'shared/mocks/medusa-cards.json',
-  'shared/mocks/tesla-cards.json',
+  path.join(packRoot, 'heroes/medusa/cards.json'),
+  path.join(packRoot, 'heroes/tesla/cards.json'),
 ];
 
 let allMissing = [];
-for (const f of files) {
-  const { missing, count } = processFile(f);
+for (const filePath of files) {
+  const { missing, count } = processFile(filePath);
   allMissing.push(...missing);
-  console.log(`${f}: annotated`);
+  console.log(`${path.relative(packRoot, filePath)}: annotated`);
 }
 
 const medusaIndex = path.join(root, '../Unmatched-pack/heroes/medusa/index.json');

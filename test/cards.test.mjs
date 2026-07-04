@@ -1,13 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { EFFECT_TRIGGERS } from '../shared/constants/triggers.js';
 import { evaluateCardTrigger, evaluateTrigger, pickPipelineCard, pickPipelineCell, pickPipelineTarget, startPipeline, submitPipelineInput } from '../shared/utils/rules/pipeline.js';
 import { runFact } from '../shared/utils/rules/facts.js';
 import { assert, makeCtx, makeMap, mockEvents, withCurrentHp } from './fixtures.mjs';
+import { loadHeroCards } from './packLoader.mjs';
 
-const cardsPath = join(dirname(fileURLToPath(import.meta.url)), '../shared/mocks/medusa-cards.json');
-const medusaCards = JSON.parse(readFileSync(cardsPath, 'utf8'));
+const medusaCards = loadHeroCards('medusa');
 const medusa01 = medusaCards.find(c => c.id === 'medusa_01');
 const medusa02 = medusaCards.find(c => c.id === 'medusa_02');
 const medusa03 = medusaCards.find(c => c.id === 'medusa_03');
@@ -607,6 +604,54 @@ assert(deathGaze.trigger === EFFECT_TRIGGERS.AFTER_COMBAT, 'effect trigger');
   assert(pickPipelineTarget(playCtx, 'enemy1'), 'pick target');
   assert(G.players[1].fighters[0].currentHp === 3, '2 damage dealt');
   assert(G.pipeline === null, 'fateful meeting pipeline done');
+}
+
+// medusa zone via attackType (pack field), not rangeType
+{
+  const ctx = makeCtx('EFFECT', '0');
+  const G = {
+    map: {
+      circles: [
+        { id: 1, zones: ['#F1E493'], neighbors: [2] },
+        { id: 2, zones: ['#F1E493'], neighbors: [1, 3] },
+        { id: 3, zones: ['#F1E493'], neighbors: [2] },
+      ],
+    },
+    players: [
+      {
+        id: '0',
+        fighters: [
+          {
+            id: 'medusa',
+            type: 'hero',
+            attackType: 'ranged',
+            hp: 10,
+            currentHp: 10,
+            position: '1',
+          },
+        ],
+      },
+      {
+        id: '1',
+        fighters: [
+          {
+            id: 'tesla',
+            type: 'hero',
+            attackType: 'ranged',
+            hp: 10,
+            currentHp: 10,
+            position: '3',
+          },
+        ],
+      },
+    ],
+  };
+  const candidates = runFact(
+    'FIGHTERS_IN_RANGE',
+    { sourceId: 'medusa', side: 'any', kind: 'fighter' },
+    { G, ctx },
+  );
+  assert(candidates.includes('medusa') && candidates.includes('tesla'), 'zone targets via attackType');
 }
 
 // --- medusa_04: after combat move each harpy ---

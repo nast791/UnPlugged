@@ -1,3 +1,5 @@
+import { assignTeamId } from '../shared/utils/rules/helpers.js';
+
 export const assert = (cond, msg) => {
   if (!cond) throw new Error(msg);
 };
@@ -18,13 +20,16 @@ export const withCurrentHp = fighter => ({
 
 export const makePlayer = (id, overrides = {}) => {
   const suffix = String(Number(id) + 1);
+  const playerCount = overrides.playerCount ?? 2;
   return {
     id,
     name: `P${id}`,
     type: 'human',
+    teamId: assignTeamId(Number(id), playerCount),
     hand: [],
     discard: [],
     deck: [],
+    visibility: { deck: false, hand: false, discard: false },
     fighters: [
       withCurrentHp({
         id: `hero${suffix}`,
@@ -64,13 +69,20 @@ export const makeG = (overrides = {}) => ({
   bonus: 0,
   bonusCards: [],
   log: [],
+  privateLog: [],
+  logSeq: 0,
   pendingActions: [],
   highlightCells: [],
   highlightFighters: [],
+  recentDamage: [],
   targetSelection: null,
   vars: {},
   outputVar: null,
   pipeline: null,
+  zoneVisibilityGrants: [],
+  cardZoneUI: {},
+  cardZoneCounts: {},
+  handCardUI: { selectableIds: null, disabledIds: [] },
   turn: 0,
   selectedAction: null,
   ...overrides,

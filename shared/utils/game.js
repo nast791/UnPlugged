@@ -10,6 +10,7 @@ import { effect } from './phases/effect.js';
 import { turnEnd } from './phases/turnend.js';
 import { TurnOrder, INVALID_MOVE } from '#boardgame/core';
 import { runMove } from './rules/moves.js';
+import { applyPlayerView } from './rules/logging.js';
 
 const asMove = (name, mapPayload) => (playCtx, payload) => {
   const params = mapPayload ? mapPayload(payload) : payload;
@@ -17,8 +18,8 @@ const asMove = (name, mapPayload) => (playCtx, payload) => {
 };
 
 const sharedMoves = {
-  clearHighlights: playCtx => runMove('CLEAR_HIGHLIGHTS', playCtx),
-  clearOwnSelection: playCtx => runMove('CLEAR_OWN_SELECTION', playCtx),
+  clearHighlights: asMove('CLEAR_HIGHLIGHTS'),
+  clearOwnSelection: asMove('CLEAR_OWN_SELECTION'),
   selectTarget: asMove('SELECT_TARGET'),
   selectCard: asMove('SELECT_CARD'),
   selectHandCard: asMove('SELECT_CARD'),
@@ -26,6 +27,8 @@ const sharedMoves = {
   selectOpponentPlayer: asMove('SELECT_OPPONENT_PLAYER'),
   selectCell: asMove('SELECT_CELL'),
   setVariables: asMove('SUBMIT_PIPELINE_INPUT'),
+  confirmZoneView: asMove('DISMISS_ZONE_VIEW'),
+  cancelAction: asMove('CANCEL_ACTION'),
 };
 
 const createPhase = config => ({
@@ -53,14 +56,21 @@ export const game = {
       bonusCards: [],
       turn: 0,
       log: [],
+      privateLog: [],
+      logSeq: 0,
       pendingActions: [],
       winner: false,
       highlightCells: [],
       highlightFighters: [],
+      recentDamage: [],
       targetSelection: null,
       vars: {},
       outputVar: null,
       pipeline: null,
+      zoneVisibilityGrants: [],
+      cardZoneUI: {},
+      cardZoneCounts: {},
+      handCardUI: { selectableIds: null, disabledIds: [] },
     };
   },
   endIf: ({ G, ctx }) => {
@@ -68,6 +78,7 @@ export const game = {
       return { winner: G.winner };
     }
   },
+  playerView: ({ G, ctx, playerID }) => applyPlayerView(G, ctx, playerID),
   phases: {
     [GAME_PHASES.UNIT_PLACEMENT]: {
       ...createPhase(placementPhase),

@@ -4,25 +4,47 @@
     :class="[
       item.acted && 'grayscale',
       isStacked && index > 0 && `-mt-50`,
-      isStacked && !isSelected && `z-${index}`,
-      isSelected && `z-1000! border-(--brand-color)! to-white-30!`,
+      isStacked && !isSelected && !isPipelineTargetCard && `z-${index}`,
+      isSelected && !isPipelineTargetCard && `z-1000! border-(--brand-color)! to-white-30!`,
+      isPipelineTargetCard && 'z-1000! border-2! border-white/60',
+      slashing && 'overflow-visible!',
     ]"
     :style="{ '--brand-color': player.color }"
     v-if="item && player"
     @click.stop="client.moves.selectTarget({ fighterId: item.id })"
   >
+    <div
+      v-if="slashing"
+      class="pointer-events-none absolute inset-0 z-30 overflow-visible rounded-12"
+      aria-hidden="true"
+    >
+      <svg class="damage-lightning damage-lightning--card" viewBox="0 0 40 80">
+        <path :d="LIGHTNING_PATH_D" />
+      </svg>
+    </div>
+
     <div class="flex flex-1 justify-between gap-24">
       <div class="flex flex-1 gap-8 items-center">
-        <NuxtImg
-          loading="lazy"
-          :src="item.image"
-          class="w-45 h-45 rounded-full border-2 object-cover shadow-xl select-none"
-          :class="[isDraggable && 'cursor-grab active:cursor-grabbing']"
-          :style="{ borderColor: player.color }"
-          alt=""
-          @mousedown.prevent="onStartDragging"
-          :draggable="false"
-        />
+        <div class="relative shrink-0">
+          <NuxtImg
+            loading="lazy"
+            :src="item.image"
+            class="w-45 h-45 rounded-full border-2 object-cover shadow-xl select-none"
+            :class="[isDraggable && 'cursor-grab active:cursor-grabbing']"
+            :style="{ borderColor: player.color }"
+            alt=""
+            @mousedown.prevent="onStartDragging"
+            :draggable="false"
+          />
+          <svg
+            v-if="slashing"
+            class="damage-lightning damage-lightning--avatar pointer-events-none absolute inset-0"
+            viewBox="0 0 40 80"
+            aria-hidden="true"
+          >
+            <path :d="LIGHTNING_PATH_D" />
+          </svg>
+        </div>
 
         <div class="flex flex-col flex-1 gap-4">
           <div class="flex justify-between gap-20 leading-none">
@@ -55,10 +77,10 @@
 
             <div class="flex items-end gap-4">
               <span
-                class="text-12 font-black font-mono"
-                :class="item.currentHp < item.hp / 3 ? 'text-rose-500' : 'text-white'"
+                class="text-12 font-black font-mono transition-colors duration-200"
+                :class="displayHp < item.hp / 3 ? 'text-rose-500' : 'text-white'"
               >
-                {{ item.currentHp
+                {{ displayHp
                 }}<span class="text-slate-400"><span class="mx-3">/</span>{{ item.hp }}</span>
               </span>
               <span class="text-12 font-extrabold text-slate-500 uppercase tracking-wide">HP</span>
@@ -68,9 +90,9 @@
           <div class="flex flex-col">
             <div class="h-6 w-full bg-black/40 rounded-full border border-white/5 overflow-hidden">
               <div
-                class="h-6 rounded-full transition-all duration-1000 ease-out relative shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-                :class="getHealthColor(item.currentHp, item.hp)"
-                :style="{ width: (item.currentHp / item.hp) * 100 + '%' }"
+                class="h-6 rounded-full relative shadow-[0_0_10px_rgba(0,0,0,0.5)] transition-[width] duration-500 ease-out"
+                :class="getHealthColor(displayHp, item.hp)"
+                :style="{ width: (displayHp / item.hp) * 100 + '%' }"
               />
             </div>
           </div>
@@ -83,7 +105,6 @@
   </div>
 </template>
 <script setup>
-import IconFoot from '~/svg/footprint.svg';
 import IconSword from '~/svg/sword.svg';
 import IconBow from '~/svg/bow.svg';
 import IconFlail from '~/svg/flail.svg';
@@ -91,6 +112,8 @@ import Note from '~/components/molecules/sidebar/Note.vue';
 import { useGlobalDrag } from '~/composables/game/useGlobalDrag';
 import { useKonvaPlacement } from '~/composables/konva/useKonvaPlacement';
 import { useBoardgame } from '~/composables/game/useBoardgame';
+import { useCardPlayPhase } from '~/composables/game/useCardPlayPhase';
+import { useFighterDamageSlash, DAMAGE_SLASH_MS, LIGHTNING_PATH_D } from '~/composables/game/useFighterDamageSlash';
 import { getOwnPickedId } from '#shared/utils/rules/helpers';
 
 const { group, item, player } = defineProps({
@@ -100,6 +123,7 @@ const { group, item, player } = defineProps({
 });
 
 const { client, G, ctx, activePlayer } = useBoardgame();
+const { isPipelineTarget } = useCardPlayPhase();
 const isStacked = computed(() => group?.length > 1);
 const isMyTurn = computed(() => {
   if (!(ctx.value || client.value)) return;
@@ -120,6 +144,12 @@ const isDraggable = computed(() => {
 const index = computed(() => group.findIndex(i => i.id === item.id));
 
 const isSelected = computed(() => getOwnPickedId(G.value) === String(item.id));
+const isPipelineTargetCard = computed(() => isPipelineTarget(item.id));
+const { slashing, displayHp } = useFighterDamageSlash(
+  () => item.id,
+  () => item.currentHp,
+);
+const slashDuration = `${DAMAGE_SLASH_MS}ms`;
 
 const rangeType = computed(() => {
   switch (item.rangeType) {
@@ -129,6 +159,8 @@ const rangeType = computed(() => {
       return markRaw(IconBow);
     case 'through 1':
       return markRaw(IconFlail);
+    default:
+      return null;
   }
 });
 
@@ -150,3 +182,57 @@ const onStartDragging = () => {
   });
 };
 </script>
+
+<style scoped>
+.damage-lightning {
+  overflow: visible;
+}
+
+.damage-lightning--card {
+  position: absolute;
+  top: -4%;
+  left: 14%;
+  width: 32%;
+  height: 108%;
+}
+
+.damage-lightning--avatar {
+  position: absolute;
+  width: 115%;
+  height: 115%;
+  left: -7.5%;
+  top: -7.5%;
+}
+
+.damage-lightning path {
+  fill: none;
+  stroke: #f8fafc;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 1))
+    drop-shadow(0 0 10px rgba(226, 232, 240, 0.95))
+    drop-shadow(0 0 18px rgba(148, 163, 184, 0.75));
+  stroke-dasharray: 130;
+  stroke-dashoffset: 130;
+  animation: damage-lightning-strike v-bind(slashDuration) ease-out forwards;
+}
+
+@keyframes damage-lightning-strike {
+  0% {
+    stroke-dashoffset: 130;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  42% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+</style>

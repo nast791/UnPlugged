@@ -1,7 +1,7 @@
 <template>
   <v-group ref="imageNode" :config="groupConfig" v-if="position?.x || position?.y">
     <v-circle
-      v-if="isHighlighted"
+      v-if="isOwnSelected"
       :config="{
         radius: nodeSize / 3 + 8,
         fill: color,
@@ -12,7 +12,6 @@
         listening: false,
       }"
     />
-    <!-- 1. Тень под фишкой (для эффекта левитации) -->
     <v-circle
       :config="{
         radius: nodeSize / 3 + 2,
@@ -23,7 +22,6 @@
         listening: false,
       }"
     />
-    <!-- 2. Основание фишки (пластиковый борт) -->
     <v-circle
       :config="{
         radius: nodeSize / 3 + 2,
@@ -34,7 +32,6 @@
         strokeWidth: 1,
       }"
     />
-    <!-- 3. Внутренняя кромка (создает объемный бортик) -->
     <v-circle
       :config="{
         radius: nodeSize / 3 - 1,
@@ -43,7 +40,6 @@
         listening: false,
       }"
     />
-    <!-- 3. АВАТАР -->
     <v-group>
       <v-image
         :config="{
@@ -57,9 +53,9 @@
           strokeWidth: 1,
         }"
       />
-      <!-- НОВОЕ: Слой для "сочности" цветов (Overlay) -->
+      <v-line v-if="slashing" :config="slashLineConfig" />
       <v-circle
-        v-if="isHighlighted"
+        v-if="isOwnSelected"
         :config="{
           radius: nodeSize / 3.2,
           fillRadialGradientStartRadius: 0,
@@ -77,6 +73,8 @@
 <script setup>
 import useKonvaLoader from '~/composables/konva/useKonvaLoader';
 import { useBoardgame } from '~/composables/game/useBoardgame';
+import { useCardPlayPhase } from '~/composables/game/useCardPlayPhase';
+import { useFighterDamageSlash, getLightningKonvaPoints, LIGHTNING_DASH_LEN } from '~/composables/game/useFighterDamageSlash';
 import { getOwnPickedId } from '#shared/utils/rules/helpers';
 
 defineOptions({
@@ -95,22 +93,51 @@ const { imageUrl, position, nodeSize, item } = defineProps({
 const { loadAsset } = useKonvaLoader();
 const heroImg = ref(null);
 const imageNode = ref(null);
-const emit = defineEmits(['click']);
-const { client, G, ctx, activePlayer } = useBoardgame();
+const { client, G } = useBoardgame();
+const { isFighterSelectable } = useCardPlayPhase();
+const { slashOpacity, slashDashOffset, slashing } = useFighterDamageSlash(
+  () => item.id,
+  () => item.currentHp,
+);
+
+const playerId = computed(() =>
+  G.value?.players?.find(p => p.fighters?.some(f => f.id === item.id))?.id,
+);
+
+const isOwnSelected = computed(() => getOwnPickedId(G.value) === String(item.id));
+
+const slashLineConfig = computed(() => ({
+  points: getLightningKonvaPoints(),
+  stroke: '#f8fafc',
+  strokeWidth: 3.5,
+  lineCap: 'round',
+  lineJoin: 'round',
+  opacity: Math.max(slashOpacity.value, slashDashOffset.value < LIGHTNING_DASH_LEN ? 0.9 : 0),
+  dash: [LIGHTNING_DASH_LEN],
+  dashOffset: slashDashOffset.value,
+  shadowColor: '#ffffff',
+  shadowBlur: 16,
+  shadowOpacity: 0.85,
+  listening: false,
+}));
+
+const canSelect = computed(() => {
+  const ownerId = playerId.value;
+  if (ownerId == null) return false;
+  return isFighterSelectable(item, ownerId);
+});
+
+const handleSelect = () => {
+  if (!canSelect.value) return;
+  client.value?.moves?.selectTarget?.({ fighterId: item.id });
+};
 
 const isHovered = ref(false);
-
-const isHighlighted = computed(() => {
-  if (getOwnPickedId(G.value) === String(item.id)) return true;
-  const ids = G.value?.highlightFighters;
-  if (!Array.isArray(ids)) return false;
-  return ids.map(String).includes(String(item.id));
-});
 
 const groupConfig = computed(() => {
   let scale = 1;
   if (isHovered.value) scale = 1.1;
-  if (isHighlighted.value) scale = 1.15;
+  if (isOwnSelected.value) scale = 1.15;
 
   return {
     x: position?.x || 0,
@@ -120,21 +147,18 @@ const groupConfig = computed(() => {
     width: nodeSize,
     height: nodeSize,
     listening: true,
-    onClick: () => client.value.moves.selectTarget({ fighterId: item.id }),
-    onTap: () => client.value.moves.selectTarget({ fighterId: item.id }),
+    onClick: () => handleSelect(),
+    onTap: () => handleSelect(),
     onMouseEnter: e => {
+      if (!canSelect.value) return;
       isHovered.value = true;
       const stage = e.target.getStage();
-      if (stage) {
-        stage.container().style.cursor = 'pointer';
-      }
+      if (stage) stage.container().style.cursor = 'pointer';
     },
     onMouseLeave: e => {
       isHovered.value = false;
       const stage = e.target.getStage();
-      if (stage) {
-        stage.container().style.cursor = 'default';
-      }
+      if (stage) stage.container().style.cursor = 'default';
     },
   };
 });
@@ -147,8 +171,7 @@ const initFighter = async () => {
     heroImg.value = img;
     await nextTick();
     if (cancelled) return;
-    const node = imageNode.value?.getNode();
-    node?.getLayer()?.batchDraw();
+    imageNode.value?.getNode()?.getLayer()?.batchDraw();
   } catch (e) {
     console.error('Ошибка', e);
   }
@@ -160,6 +183,8 @@ onUnmounted(() => {
 });
 
 onMounted(initFighter);
-
 watch(() => imageUrl, initFighter);
+watch([slashOpacity, slashDashOffset, slashing], () => {
+  imageNode.value?.getNode()?.getLayer()?.batchDraw();
+});
 </script>

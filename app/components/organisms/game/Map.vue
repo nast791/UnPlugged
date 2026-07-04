@@ -52,10 +52,13 @@
         </div>
       </Teleport>
     </ClientOnly>
+
+    <PlayedCardFloat :map-container="mapContainer" />
   </section>
 </template>
 
 <script setup>
+import PlayedCardFloat from '~/components/organisms/game/PlayedCardFloat.vue';
 import MapLines from '~/components/molecules/map/MapLines.vue';
 import MapNode from '~/components/molecules/map/MapNode.vue';
 import MapFighter from '~/components/molecules/map/MapFighter.vue';
@@ -75,7 +78,7 @@ const stageConfig = ref({
 const currentScale = ref(1);
 const observer = ref(null);
 
-const { client, G, ctx } = useBoardgame();
+const { client, G } = useBoardgame();
 
 const mapData = computed(() => G.value?.map);
 const playersData = computed(() => G.value?.players || []);

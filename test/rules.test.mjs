@@ -40,7 +40,7 @@ applyOwnFighterPhaseCells({ G: makeG(), ctx: ctx('MOVEMENT') });
   const G = makeG();
   const c = ctx('UNIT_PLACEMENT', '0');
   const events = { endTurn: () => {} };
-  assert(runMove('PLACE_FIGHTER', { G, ctx: c, events }, { unitId: 'hero1', circleId: 1 }), 'PLACE_FIGHTER');
+  assert(runMove('PLACE_FIGHTER', { G, ctx: c, events }, { unitId: 'hero1', circleId: 1 }) !== false, 'PLACE_FIGHTER');
   assert(G.players[0].fighters[0].position === 1, 'fighter placed');
   assert(G.players[0].fighters[0].startPosition === 1, 'startPosition set');
   assert(G.log.length === 1, 'placement log once');
@@ -53,7 +53,7 @@ applyOwnFighterPhaseCells({ G: makeG(), ctx: ctx('MOVEMENT') });
   G.players[0].fighters[0].startPosition = 1;
   const c = ctx('UNIT_PLACEMENT', '0');
   assert(
-    !runMove('PLACE_FIGHTER', { G, ctx: c, events: {} }, { unitId: 'asst1', circleId: 1 }),
+    runMove('PLACE_FIGHTER', { G, ctx: c, events: {} }, { unitId: 'asst1', circleId: 1 }) === false,
     'PLACE_FIGHTER rejects occupied hero cell',
   );
 }
@@ -457,7 +457,7 @@ applyOwnFighterPhaseCells({ G: makeG(), ctx: ctx('MOVEMENT') });
   assert(!G.outputVar, 'no outputVar leak');
 }
 
-// --- REFRESH_MOVEMENT_UI does not log ---
+// --- REFRESH_CARD_UI does not log ---
 {
   const G = makeG();
   const hero = G.players[0].fighters[0];
@@ -466,9 +466,9 @@ applyOwnFighterPhaseCells({ G: makeG(), ctx: ctx('MOVEMENT') });
   const c = ctx('MOVEMENT', '0');
   G.log.push({ msg: 'phase hint', type: 'info' });
   const len = G.log.length;
-  runMove('REFRESH_MOVEMENT_UI', { G, ctx: c, events: {} });
-  runMove('REFRESH_MOVEMENT_UI', { G, ctx: c, events: {} });
-  assert(G.log.length === len, 'REFRESH_MOVEMENT_UI silent');
+  runMove('REFRESH_CARD_UI', { G, ctx: c, events: {} });
+  runMove('REFRESH_CARD_UI', { G, ctx: c, events: {} });
+  assert(G.log.length === len, 'REFRESH_CARD_UI silent');
   assert(G.pendingActions.some(a => a.action === 'confirmMovement'), 'movement actions set');
 }
 
@@ -485,7 +485,7 @@ applyOwnFighterPhaseCells({ G: makeG(), ctx: ctx('MOVEMENT') });
   G.bonus = 1;
   G.bonusCards = ['bonus1'];
 
-  assert(runMove('CANCEL_MOVEMENT_BONUS', { G, ctx: c, events: {} }), 'CANCEL_MOVEMENT_BONUS');
+  assert(runMove('CANCEL_MOVEMENT_BONUS', { G, ctx: c, events: {} }) !== false, 'CANCEL_MOVEMENT_BONUS');
   assert(player.hand.some(c => c.id === 'bonus1'), 'card restored to hand');
   assert(G.bonus === 0 && G.bonusCards.length === 0, 'bonus cleared');
   assert(hero.position === 1, 'positions reset after cancel');
@@ -512,7 +512,7 @@ applyOwnFighterPhaseCells({ G: makeG(), ctx: ctx('MOVEMENT') });
   const c = ctx('UNIT_PLACEMENT', '1');
   const events = { endTurn: () => { events.called = true; }, called: false };
 
-  assert(runMove('AUTO_PLACE_AI', { G, ctx: c, events }), 'AUTO_PLACE_AI');
+  assert(runMove('AUTO_PLACE_AI', { G, ctx: c, events }) !== false, 'AUTO_PLACE_AI');
   assert(G.players[1].fighters.every(f => f.position != null), 'AI all placed');
   assert(events.called, 'AUTO_PLACE_AI endTurn');
 }

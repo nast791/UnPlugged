@@ -53,7 +53,11 @@ export const turnEnd = {
       const selected = player.hand.filter(c => c.isSelected);
 
       if (selected.length !== count) {
-        runMove('LOG', { G, ctx }, { message: `Не выбрано ${count} карт для сброса`, type: 'danger' });
+        runMove('LOG', { G, ctx }, {
+          message: `Не выбрано ${count} карт для сброса`,
+          type: 'danger',
+          audience: 'private',
+        });
         return INVALID_MOVE;
       }
       runMove('MOVE_CARDS', { G, ctx }, { player, from: 'selected', count, to: 'discard' });

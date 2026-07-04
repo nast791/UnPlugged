@@ -12,27 +12,28 @@ export const movement = {
     G.bonusCards = [];
     runMove('LOG', { G, ctx }, {
       message: 'Выберите карту для усиления или перемещайте бойцов',
+      audience: 'private',
     });
-    runMove('REFRESH_MOVEMENT_UI', { G, ctx });
+    runMove('REFRESH_CARD_UI', { G, ctx });
   },
   moves: {
     getAvailableCells: ({ G, ctx }, { fighterId }) => {
       G.highlightCells = runFact('MOVEMENT_CELLS', { fighterId }, { G, ctx });
     },
     applyBonus: (playCtx, cardId) => {
-      if (!runMove('APPLY_MOVEMENT_BONUS', playCtx, { cardId })) return INVALID_MOVE;
+      if (runMove('APPLY_MOVEMENT_BONUS', playCtx, { cardId }) === false) return INVALID_MOVE;
     },
     cancelBonus: playCtx => {
-      if (!runMove('CANCEL_MOVEMENT_BONUS', playCtx)) return INVALID_MOVE;
+      if (runMove('CANCEL_MOVEMENT_BONUS', playCtx) === false) return INVALID_MOVE;
     },
     moveFighter: (playCtx, { fighterId, targetId }) => {
-      if (!runMove('MOVE_FIGHTER', playCtx, { fighterId, targetId })) return INVALID_MOVE;
+      if (runMove('MOVE_FIGHTER', playCtx, { fighterId, targetId }) === false) return INVALID_MOVE;
     },
     resetPositions: playCtx => {
       runMove('RESET_MOVEMENT_POSITIONS', playCtx);
     },
     confirmMovement: playCtx => {
-      runMove('CONFIRM_MOVEMENT', playCtx);
+      if (runMove('CONFIRM_MOVEMENT', playCtx) === false) return INVALID_MOVE;
     },
   },
   onEnd: ({ G, ctx }) => {

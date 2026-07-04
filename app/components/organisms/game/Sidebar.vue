@@ -14,12 +14,17 @@
               : 'opacity-70 scale-[0.98]',
           ]"
         >
-          <Player :item="player" />
+          <Player
+            :item="player"
+            :selectable="isOpponentSelectable(player.id)"
+            :highlight="isSelectingOpponent && isOpponentSelectable(player.id)"
+          />
 
           <!-- Герои  -->
           <div class="flex flex-col gap-6">
             <Fighter
               v-for="unit in player.fighters"
+              :key="`${player.id}-${unit.id}`"
               :item="unit"
               :player="player"
               :group="player.fighters?.filter(i => i.type === unit.type)"
@@ -37,8 +42,8 @@
             <IconCards class="size-18" />
             <div class="flex gap-8 flex-1">
               <Card
-                :count="player[item.id]?.length"
-                :active="player.visibility?.[item.id]"
+                :count="getZoneCount(player, item.id)"
+                :active="isZoneVisible(player.id, item.id)"
                 @click="clickCardHandler(player.id, item)"
                 :style="isWindowActive(player.id, item.id) && { borderColor: player.color }"
                 v-for="item in decks"
@@ -92,14 +97,38 @@ import Console from '~/components/molecules/sidebar/Console.vue';
 import Window from '~/components/atoms/Window.vue';
 import { DECK_LABELS } from '#shared/constants/decks';
 import { useBoardgame } from '~/composables/game/useBoardgame';
+import { useCardPlayPhase } from '~/composables/game/useCardPlayPhase';
+import { useCardPlayPresentation } from '~/composables/game/useCardPlayPresentation';
 
 const emit = defineEmits(['showStats', 'openDiscard', 'zoomEffect']);
 const { client, G, ctx } = useBoardgame();
+const { isSelectingMainCard, isSelectingOpponent, isOpponentSelectable } = useCardPlayPhase();
+const { hasPlayedCard } = useCardPlayPresentation();
+
 const decks = DECK_LABELS;
 const players = computed(() => G.value?.players || []);
 const activePlayerIndex = computed(() => ctx.value?.currentPlayer);
 
+const getZoneCount = (player, zone) =>
+  player?.zoneCounts?.[zone] ??
+  G.value?.cardZoneCounts?.[String(player.id)]?.[zone] ??
+  0;
+
+const isZoneVisible = (playerId, zone) => {
+  const zones =
+    G.value?.cardZoneUI?.[String(playerId)] ??
+    players.value.find(p => String(p.id) === String(playerId))?.visibility;
+  if (!zones?.[zone]) return false;
+  const player = players.value.find(p => String(p.id) === String(playerId));
+  return getZoneCount(player, zone) > 0;
+};
+
 const activeWindows = ref([]);
+
+const isMyTurn = computed(() => {
+  if (!ctx.value || !client.value) return false;
+  return String(ctx.value.currentPlayer) === String(client.value.playerID);
+});
 
 const isWindowActive = (id, type) => {
   return activeWindows.value.some(i => i.id === id && i.type === type);
@@ -114,7 +143,23 @@ const getMaxZIndex = () => {
   return activeWindows.value.length > 0 ? Math.max(...activeWindows.value.map(i => i.zIndex)) : 100;
 };
 
+const openWindow = (playerId, type, typeName) => {
+  if (isWindowActive(playerId, type)) {
+    bringToFront(playerId, type);
+    return;
+  }
+
+  activeWindows.value.push({
+    id: playerId,
+    type,
+    typeName,
+    zIndex: getMaxZIndex() + 1,
+  });
+};
+
 const clickCardHandler = (id, item) => {
+  if (!isZoneVisible(id, item.id)) return;
+
   const isAlreadyOpen = activeWindows.value.find(i => i.id === id && i.type === item.id);
 
   if (isAlreadyOpen) {
@@ -122,15 +167,50 @@ const clickCardHandler = (id, item) => {
     return;
   }
 
-  activeWindows.value.push({
-    id: id,
-    type: item.id,
-    typeName: item.name,
-    zIndex: getMaxZIndex() + 1,
-  });
+  openWindow(id, item.id, item.name);
 };
 
 const closeWindow = (playerId, type) => {
   activeWindows.value = activeWindows.value.filter(i => !(i.id === playerId && i.type === type));
 };
+
+watch(
+  () => hasPlayedCard.value,
+  active => {
+    if (!active || !isMyTurn.value) return;
+    const playerId = ctx.value?.currentPlayer;
+    if (playerId != null) closeWindow(playerId, 'hand');
+  },
+);
+
+watch(
+  () => isSelectingMainCard.value,
+  (selecting, wasSelecting) => {
+    if (!isMyTurn.value) return;
+
+    const playerId = ctx.value?.currentPlayer;
+    if (selecting && playerId != null) {
+      openWindow(playerId, 'hand', 'Рука');
+      return;
+    }
+
+    if (wasSelecting && playerId != null) {
+      closeWindow(playerId, 'hand');
+    }
+  },
+);
+
+watch(
+  () => G.value?.zoneVisibilityGrants?.map(g => g.id).join(','),
+  () => {
+    if (!isMyTurn.value) return;
+    const viewerId = String(ctx.value?.currentPlayer ?? '');
+    for (const grant of G.value?.zoneVisibilityGrants ?? []) {
+      if (String(grant.viewerId) !== viewerId) continue;
+      if (grant.zone !== 'hand') continue;
+      if (!isZoneVisible(grant.ownerId, 'hand')) continue;
+      openWindow(grant.ownerId, 'hand', 'Рука');
+    }
+  },
+);
 </script>
